@@ -254,11 +254,11 @@ textarea.out{min-height:140px;font-size:14px}
   <!-- MASUK ADMIN -->
   <section data-v="masuk" hidden>
     <form class="card" id="login-form" autocomplete="on">
-      <h2>Masuk admin</h2>
-      <p class="muted">Khusus pemilik halaman. Pengikut tidak perlu masuk.</p>
+      <h2>Login</h2>
+      <p class="muted" id="login-hint">Khusus pemilik halaman. Pengikut tidak perlu masuk.</p>
       <label class="field"><span>Username</span><input id="luser" name="luser" type="text" required autocomplete="username"></label>
       <label class="field"><span>Kata sandi</span><input id="lpass" name="lpass" type="password" required autocomplete="current-password"></label>
-      <button class="btn primary" type="submit" id="login-submit">Masuk</button>
+      <button class="btn primary" type="submit" id="login-submit">Login</button>
       <p class="msg" id="login-msg" hidden></p>
     </form>
     <div class="card" id="login-state" hidden></div>
@@ -342,6 +342,7 @@ function route(){
   if(['dukung','cerita','antrian','admin','masuk'].indexOf(v)<0||(v==='admin'&&!S.admin))v='dukung';
   $$('section[data-v]').forEach(function(s){s.hidden=s.dataset.v!==v;});
   $$('.tabs a').forEach(function(a){if(a.dataset.v===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  if(v==='masuk')checkAdminMode();
 }
 window.addEventListener('hashchange',route);
 
@@ -711,12 +712,16 @@ function showBrief(q,box){
   box.append(ph,ta,el('div',{class:'row',style:'margin-top:8px'},cb));
 }
 
+function adminDisplayName(){
+  var e=String(S.email||'');
+  return e.indexOf('@'+ADMIN_EMAIL_DOMAIN)>0?e.slice(0,e.indexOf('@')):e;
+}
 function renderLogin(){
   var form=$('#login-form'),st=$('#login-state');
   st.replaceChildren();
   if(S.admin||S.email){
     form.hidden=true;st.hidden=false;
-    st.append(el('p',{text:S.admin?'Kamu masuk sebagai admin ('+S.email+').':'Akun '+S.email+' tidak terdaftar sebagai admin.'}));
+    st.append(el('p',{text:S.admin?'Kamu masuk sebagai '+adminDisplayName()+'.':'Akun '+adminDisplayName()+' tidak terdaftar sebagai admin.'}));
     var row=el('div',{class:'row'});
     if(S.admin)row.append(el('a',{class:'btn primary',href:'#admin',text:'Buka tab Admin'}));
     row.append(el('button',{class:'btn',type:'button',text:'Keluar',onclick:logout}));
@@ -866,6 +871,21 @@ $('#settings-form').addEventListener('submit',function(e){
   });
 });
 
+var S_noAdminYet=null; // null=belum dicek, true/false setelah dicek
+function checkAdminMode(){
+  if(!S.sb||S_noAdminYet!==null)return;
+  S.sb.rpc('admin_exists').then(function(r){
+    S_noAdminYet=!(r.data);
+    var hint=$('#login-hint'),btn=$('#login-submit');
+    if(S_noAdminYet){
+      hint.textContent='Belum ada admin. Isi username dan kata sandi untuk daftar sebagai admin pertama.';
+      btn.textContent='Daftar sebagai admin';
+    }else{
+      hint.textContent='Khusus pemilik halaman. Pengikut tidak perlu masuk.';
+      btn.textContent='Login';
+    }
+  });
+}
 $('#login-form').addEventListener('submit',function(e){
   e.preventDefault();
   var f=e.target.elements,msg=$('#login-msg'),btn=$('#login-submit');
@@ -873,10 +893,25 @@ $('#login-form').addEventListener('submit',function(e){
   var u=f.luser.value.trim().toLowerCase();
   if(!u){say(msg,'Isi username.','err');return;}
   btn.disabled=true;
-  S.sb.auth.signInWithPassword({email:u+'@'+ADMIN_EMAIL_DOMAIN,password:f.lpass.value}).then(function(r){
-    if(r.error){say(msg,'Username atau kata sandi salah.','err');btn.disabled=false;return;}
-    location.hash='#admin';location.reload();
-  },function(){say(msg,'Belum bisa masuk. Coba lagi.','err');btn.disabled=false;});
+  var email=u+'@'+ADMIN_EMAIL_DOMAIN,pass=f.lpass.value;
+  var signIn=function(){
+    S.sb.auth.signInWithPassword({email:email,password:pass}).then(function(r){
+      if(r.error){say(msg,'Username atau kata sandi salah.','err');btn.disabled=false;return;}
+      location.hash='#admin';location.reload();
+    },function(){say(msg,'Belum bisa masuk. Coba lagi.','err');btn.disabled=false;});
+  };
+  if(S_noAdminYet){
+    S.sb.rpc('bootstrap_admin',{p_username:u,p_password:pass}).then(function(r){
+      if(r.error){
+        var m=String(r.error.message||'');
+        if(/sudah terdaftar/i.test(m)){S_noAdminYet=false;checkAdminMode();say(msg,'Admin sudah ada. Coba login.','err');btn.disabled=false;return;}
+        say(msg,m||'Pendaftaran gagal.','err');btn.disabled=false;return;
+      }
+      signIn();
+    },function(){say(msg,'Pendaftaran gagal. Coba lagi.','err');btn.disabled=false;});
+  }else{
+    signIn();
+  }
 });
 $('#logout').addEventListener('click',logout);
 
