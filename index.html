@@ -297,8 +297,10 @@ body.adm .wrap{max-width:1100px}
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (()=>{
+const SB_URL="https://jwuhwpqfgvuqvtsajbia.supabase.co",SB_KEY="sb_publishable_xpYm-_LmjRTutWOHfbEEww_pmi1-lGR";
 const $=i=>document.getElementById(i);
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const AV=["🧑‍🎓","👧","👦","🧒","😎","🤓","🦊","🐱","🐼","🌟"];
@@ -308,11 +310,21 @@ const GJ=["Wali Kelas","Kepala Sekolah","Wakil Kepala Sekolah","Guru Matematika"
 const TP=["Ketua Kelas","Wakil Ketua Kelas","Sekretaris","Bendahara","Seksi Kebersihan","Seksi Olahraga","Juara Kelas","Tukang Tidur","Tukang Jajan","Pelawak Kelas","Anak Basket","Anak Seni"];
 const SF=["ceria","pemalu","jahil","rajin","pelupa","tegas","sabar","humoris","galak tapi baik","pendiam","penasaran"];
 const HB=["basket","menggambar","membaca","musik","game","memasak","fotografi","futsal","menulis","berkebun"];
-let myAppD=null,myRem=false,photoURL=null,photoFile=null,db=null,user=null,uid=null,isAdmin=false,lastSnap=null,sub="follower";
+let mine={card:null,app:null,removing:false},photoURL=null,photoFile=null,sb=null,isAdmin=false,admPw="",lastSnap=null,sub="follower";
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const shuf=a=>a.slice().sort(()=>Math.random()-.5);
 const COL=["--pink","--yel","--sky","--lav"];
 const col=d=>{let s=0;for(const ch of String(d.kelas||""))s+=ch.charCodeAt(0);return "var("+COL[s%4]+")"};
+
+/* ---------- Supabase ---------- */
+try{if(window.supabase)sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}})}catch(e){sb=null}
+const uuid=()=>window.crypto&&crypto.randomUUID?crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==="x"?r:(r&3|8)).toString(16)});
+const DEVK="kds_dev";
+const devId=()=>{try{let v=localStorage.getItem(DEVK);if(!v||v.length<16){v=uuid();localStorage.setItem(DEVK,v)}return v}catch(e){return window.__kdsDev||(window.__kdsDev=uuid())}};
+const rpc=async(fn,args)=>{if(!sb)throw new Error("Belum terhubung ke database. Muat ulang halaman.");const {data,error}=await sb.rpc(fn,args);if(error)throw new Error(error.message);return data};
+const pub=p=>p?SB_URL+"/storage/v1/object/public/kds/"+p:null;
+const upImg=async(blob,folder)=>{const path=folder+"/"+uuid()+".jpg";const {error}=await sb.storage.from("kds").upload(path,blob,{contentType:"image/jpeg",upsert:false});if(error)throw new Error(error.message);return path};
+const snapOf=rows=>({docs:rows.map(r=>({id:r.id,data:()=>r})),empty:!rows.length});
 
 const go=t=>{document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("show",s.id===t));document.querySelectorAll(".tabs [data-t]").forEach(b=>b.classList.toggle("on",b.dataset.t===t));document.body.classList.toggle("adm",t==="admin");if(t==="admin"){if(location.hash!=="#admin")location.hash="admin"}else if(location.hash==="#admin")location.hash="beranda";scrollTo(0,0)};
 addEventListener("hashchange",()=>{const a=location.hash==="#admin",on=document.body.classList.contains("adm");if(a&&!on){isAdmin?go("admin"):openPw()}else if(!a&&on)go("home")});
@@ -324,7 +336,7 @@ const idc=(d,o={})=>{
  const c=el("article","idc");c.style.setProperty("--h",col(d));
  const h=el("div","idh");h.appendChild(el("span","",o.label||"KARTU MURID"));if(o.right)h.appendChild(el("span","",o.right));c.appendChild(h);
  const b=el("div","idb"),g=el("div");
- const av=el("div","av"),src=d._local||(d.photo?"/_blob/"+d.photo:null);if(src){const im=document.createElement("img");im.src=src;im.alt="";av.appendChild(im)}else av.textContent=d.avatar||AV[0];b.appendChild(av);
+ const av=el("div","av"),src=d._local||pub(d.photo);if(src){const im=document.createElement("img");im.src=src;im.alt="";av.appendChild(im)}else av.textContent=d.avatar||AV[0];b.appendChild(av);
  g.appendChild(el("div","name",d.nama||"Nama karakter"));
  g.appendChild(el("div","meta",d.kelas||"Kelas"));
  const t=el("div");[d.sifat,d.hobi].forEach(x=>{if(x)t.appendChild(el("span","tag",x))});g.appendChild(t);
@@ -341,23 +353,23 @@ $("f_foto").onchange=()=>{photoFile=$("f_foto").files[0]||null;if(photoURL)URL.r
 const resize=(f,mx=480)=>new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const s=Math.min(1,mx/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error("Gagal memproses foto")),"image/jpeg",0.82)};im.onerror=()=>rej(new Error("File bukan gambar"));im.src=u});
 prev();
 
+/* ---------- Login Instagram (lokal di perangkat) ---------- */
 let igUser="",lgFocus=null;
 const IGK="kds_ig",IGRE=/^[A-Za-z0-9._]{2,30}$/;
 const lsGet=()=>{try{return localStorage.getItem(IGK)||""}catch(e){return ""}};
 const lsSet=v=>{try{v?localStorage.setItem(IGK,v):localStorage.removeItem(IGK)}catch(e){}};
-const prof=()=>db&&uid?db.collection("data/users/"+uid).doc("profile"):null;
 const renderLogin=()=>{const b=$("loginbar");b.textContent="";
  $("f_ig").value=igUser;$("reg").classList.toggle("lock",!igUser);
  if(igUser){const sp=el("span","","Masuk sebagai @"+igUser);sp.dataset.sw="1";b.appendChild(sp);const x=el("button","b sm","Keluar");x.type="button";x.onclick=logout;b.appendChild(x)}
  else{b.appendChild(el("span","","Masuk dengan Instagram dulu untuk mengisi kartu."));const x=el("button","b sm pri","Masuk");x.type="button";x.onclick=()=>openLogin();b.appendChild(x)}
  prev()};
-const setLogin=(v,save)=>{igUser=v;lsSet(v);if(save){const r=prof();if(r)(v?r.set({ig:v}):r.delete()).catch(()=>{})}renderLogin()};
-const logout=()=>setLogin("",true);
+const setLogin=v=>{igUser=v;lsSet(v);renderLogin()};
+const logout=()=>setLogin("");
 const openLogin=t=>{lgFocus=t||null;const m=$("lg");$("lg_m").classList.add("hide");$("lg_ig").value="";m.classList.remove("hide");$("lg_ig").focus()};
 const closeLogin=()=>{$("lg").classList.add("hide");const t=lgFocus;lgFocus=null;if(t&&igUser&&t.focus&&t.tagName!=="BUTTON"&&t.tagName!=="LABEL")t.focus()};
 const doLogin=()=>{const v=$("lg_ig").value.trim().replace(/^@+/,"");
  if(!IGRE.test(v)){const m=$("lg_m");m.textContent="Username 2 sampai 30 karakter: huruf, angka, titik, atau garis bawah.";m.classList.remove("hide");return}
- setLogin(v,true);closeLogin()};
+ setLogin(v);closeLogin()};
 $("lg_ok").onclick=doLogin;$("lg_no").onclick=closeLogin;
 $("lg_ig").onkeydown=e=>{if(e.key==="Enter")doLogin()};
 $("lg").onclick=e=>{if(e.target===$("lg"))closeLogin()};
@@ -365,23 +377,23 @@ addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("lg").classList.contains(
 $("reg").addEventListener("pointerdown",e=>{if(igUser||e.target.closest("#loginbar"))return;const t=e.target.closest("input,select,textarea,label,button");if(t){e.preventDefault();openLogin(t)}},true);
 $("reg").addEventListener("focusin",e=>{if(igUser||e.target.closest("#loginbar"))return;e.target.blur();openLogin(e.target)});
 igUser=lsGet();renderLogin();
+
+/* ---------- Admin ---------- */
 let adminInit=false,swN=0,swT=null;
-const ADM_DEF="1234",ADMK="kds_adm";
-const sha=async t=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode("kds:"+t)))].map(b=>b.toString(16).padStart(2,"0")).join("");
-const adminRefresh=()=>{if(lastSnap)renderChars(lastSnap);if(!curEp)drawEps()};
-const unlockAdmin=()=>{isAdmin=true;try{sessionStorage.setItem(ADMK,"1")}catch(e){}
+const ADMK="kds_adm";
+const adminRefresh=()=>{if(lastSnap)renderChars(lastSnap);if(!curEp)drawEps();loadAdmin()};
+const unlockAdmin=()=>{isAdmin=true;try{sessionStorage.setItem(ADMK,admPw)}catch(e){}
  $("tabAdmin").classList.remove("hide");if(!adminInit){adminInit=true;setupAdmin()}adminRefresh();go("admin")};
-const lockAdmin=()=>{isAdmin=false;try{sessionStorage.removeItem(ADMK)}catch(e){}
+const lockAdmin=()=>{isAdmin=false;admPw="";try{sessionStorage.removeItem(ADMK)}catch(e){}
  $("tabAdmin").classList.add("hide");go("home");adminRefresh()};
 const openPw=()=>{$("pw_m").classList.add("hide");$("pw_in").value="";$("pw").classList.remove("hide");$("pw_in").focus()};
 const closePw=()=>{$("pw").classList.add("hide");if(location.hash==="#admin"&&!isAdmin)location.hash="beranda"};
 const pwErr=t=>{const m=$("pw_m");m.textContent=t;m.classList.remove("hide")};
 const doPw=async()=>{const v=$("pw_in").value;if(!v)return;
- if(!db){pwErr("Belum terhubung ke database. Muat ulang halaman dulu.");return}
- try{let ok;const c=await db.collection("config").doc("admin").get();
-  if(c.exists&&c.data().h)ok=(await sha(v))===c.data().h;else ok=v===ADM_DEF;
+ if(!sb){pwErr("Belum terhubung ke database. Muat ulang halaman dulu.");return}
+ try{const ok=await rpc("admin_check",{p_pw:v});
   if(!ok){pwErr("Password salah.");return}
-  $("pw").classList.add("hide");unlockAdmin()}
+  admPw=v;$("pw").classList.add("hide");unlockAdmin()}
  catch(e){pwErr("Gagal memeriksa password: "+(e&&e.message||e))}};
 $("pw_ok").onclick=doPw;$("pw_no").onclick=closePw;
 $("pw_in").onkeydown=e=>{if(e.key==="Enter")doPw()};
@@ -390,26 +402,27 @@ addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("pw").classList.contains(
 $("adm_out").onclick=lockAdmin;
 $("pw_save").onclick=async()=>{const v=$("pw_new").value,m=$("pw_sm");
  if(v.length<4){m.textContent="Minimal 4 karakter.";return}
- if(!db||!(window.crypto&&crypto.subtle)){m.textContent="Tidak bisa menyimpan sekarang.";return}
- try{await db.collection("config").doc("admin").set({h:await sha(v),at:Date.now()});$("pw_new").value="";m.textContent="Password diganti."}
+ try{await rpc("admin_set_password",{p_pw:admPw,p_new:v});admPw=v;try{sessionStorage.setItem(ADMK,v)}catch(e){}$("pw_new").value="";m.textContent="Password diganti."}
  catch(e){m.textContent="Gagal: "+(e&&e.message||e)}};
 document.addEventListener("click",e=>{const t=e.target.closest("[data-sw]");if(!t)return;clearTimeout(swT);swN++;
  if(swN>=7){swN=0;e.stopPropagation();e.preventDefault();if(!isAdmin){closeLogin();openPw()}else go("admin");return}
  swT=setTimeout(()=>{swN=0},2000)},true);
-const myCard=()=>{const x=lastSnap&&uid&&lastSnap.docs.find(z=>z.id===uid);return x?x.data():null};
+
+/* ---------- Kartu saya ---------- */
+const isGuru=d=>d.tipe?d.tipe==="guru":/^(Pak|Bu) /.test(d.nama||"");
 const regUI=()=>{
- if(!db||!uid)return;
- const R=$("reg"),D=$("regdone"),c=myCard(),a=myAppD;
- if(!c&&!a){R.classList.remove("hide");D.classList.add("hide");D.textContent="";if(myRem)db.collection("removals").doc(uid).delete().catch(()=>{});return}
+ if(!sb)return;
+ const R=$("reg"),D=$("regdone"),c=mine.card,a=mine.app,myRem=mine.removing;
+ if(!c&&!a){R.classList.remove("hide");D.classList.add("hide");D.textContent="";return}
  R.classList.add("hide");D.classList.remove("hide");D.textContent="";
  const p=el("div","paper"),d=c||a;
  p.appendChild(el("h4","",c?"Kamu sudah jadi warga":"Pendaftaran menunggu admin"));
- p.appendChild(el("p","",c?"Satu akun hanya bisa punya satu kartu. Untuk daftar lagi, kartu ini harus dihapus dulu dengan persetujuan admin.":"Admin sedang mengecek kartumu. Kirim kode atau bukti donasi lewat DM Instagram."));
+ p.appendChild(el("p","",c?"Satu perangkat hanya bisa punya satu kartu. Untuk daftar lagi, kartu ini harus dihapus dulu dengan persetujuan admin.":"Admin sedang mengecek kartumu. Kirim kode atau bukti donasi lewat DM Instagram."));
  const card=idc(d,{label:c?(isGuru(c)?"GURU / STAF":"KARTU MURID"):"PENDAFTAR"});card.style.margin="12px 0";p.appendChild(card);
  if(myRem)p.appendChild(el("div","msg","Permintaan hapus sudah dikirim. Menunggu persetujuan admin."));
  else{const x=el("button","b del","Ajukan hapus kartu");
   x.onclick=()=>{if(x.dataset.s!=="1"){x.dataset.s="1";x.textContent="Yakin ajukan hapus?";setTimeout(()=>{x.dataset.s="";x.textContent="Ajukan hapus kartu"},3000);return}
-   x.disabled=true;db.collection("removals").doc(uid).set({nama:d.nama||"",from:c?"character":"application",at:Date.now()}).catch(()=>{x.disabled=false;x.textContent="Gagal, coba lagi"})};
+   x.disabled=true;rpc("request_removal",{p_owner:devId()}).then(loadMine).catch(()=>{x.disabled=false;x.textContent="Gagal, coba lagi"})};
   p.appendChild(x)}
  D.appendChild(p)};
 const show=m=>{const b=$("fmsg");b.classList.remove("hide");b.textContent="";if(typeof m==="string")b.textContent=m;else b.appendChild(m)};
@@ -418,31 +431,34 @@ $("kirim").onclick=async()=>{
  if(!igUser){openLogin();return}
  if(d.ig.length<2||!d.nama||!d.sifat||!d.kelas||(d.tipe!=="guru"&&!d.hobi)){show("Lengkapi semua kolom. Hobi boleh kosong untuk guru.");return}
  if(!$("f_ok").checked){show("Centang persetujuan dulu.");return}
- if(db){
-  try{d.status="pending";d.at=Date.now();let note="";
-  if(lastSnap&&lastSnap.docs.some(x=>{const y=x.data();return !y.npc&&String(y.ig||"").toLowerCase()===d.ig.toLowerCase()})){show("Username "+d.ig+" sudah terdaftar. Satu username hanya bisa punya satu kartu.");return}
-  const [c1,a1]=await Promise.all([db.collection("characters").doc(uid).get(),db.collection("applications").doc(uid).get()]);
-  if(c1.exists||a1.exists){show("Kamu sudah terdaftar. Ajukan hapus kartu dulu kalau mau daftar ulang.");regUI();return}
-  if(photoFile){try{const as=await claude.use("assets");if(as){d.photo=(await as.upload(await resize(photoFile))).id}else note=" Upload foto belum tersedia untuk akunmu, kirim fotonya lewat DM."}catch(e){show("Foto gagal diunggah: "+(e&&e.message||e));return}}
-  await db.collection("applications").doc(uid).set(d);show("Terkirim. Admin akan mengecek. Kirim kode atau bukti donasi lewat DM Instagram."+note)}
+ if(sb){
+  const btn=$("kirim");btn.disabled=true;
+  try{
+   let photo="";
+   if(photoFile){try{photo=await upImg(await resize(photoFile),"photos")}catch(e){show("Foto gagal diunggah: "+(e&&e.message||e));return}}
+   await rpc("submit_application",{p_owner:devId(),p_ig:d.ig,p_nama:d.nama,p_tipe:d.tipe,p_kelas:d.kelas,p_sifat:d.sifat,p_hobi:d.hobi,p_photo:photo,p_avatar:""});
+   show("Terkirim. Admin akan mengecek. Kirim kode atau bukti donasi lewat DM Instagram.");
+   await loadMine()}
   catch(e){show("Gagal kirim: "+(e&&e.message||e))}
+  finally{btn.disabled=false}
  }else{
   const txt="DAFTAR WARGA SEKOLAH\nIG: "+d.ig+"\nNama: "+d.nama+"\nTipe: "+d.tipe+"\nKelas/jabatan: "+d.kelas+"\nSifat: "+d.sifat+"\nHobi: "+d.hobi+"\nFoto: kirim lewat DM";
-  const w=el("div");w.appendChild(el("div","","Pendaftaran online belum aktif untuk akunmu. Salin teks ini dan kirim lewat DM Instagram:"));
+  const w=el("div");w.appendChild(el("div","","Pendaftaran online belum aktif. Salin teks ini dan kirim lewat DM Instagram:"));
   w.appendChild(el("pre","",txt));
   const cb=el("button","b sm","Salin");cb.onclick=()=>{try{navigator.clipboard.writeText(txt);cb.textContent="Tersalin"}catch(e){cb.textContent="Salin manual"}};
   w.appendChild(cb);show(w);
  }
 };
 
-const isGuru=d=>d.tipe?d.tipe==="guru":/^(Pak|Bu) /.test(d.nama||"");
+/* ---------- Render ---------- */
+const adm=async(fn,args,btn,after)=>{try{await rpc(fn,{p_pw:admPw,...args});await Promise.all([loadChars(),loadEps(),loadAdmin()]);if(after)after()}catch(e){if(btn){btn.disabled=false;btn.textContent="Gagal"}}};
 const bar=(s,d)=>{const f=el("div","idf");
- if(!d.npc)[["+1",1],["+5",5],["−1",-1]].forEach(([l,n])=>{const b=el("button","b sm",l);b.onclick=()=>db.collection("characters").doc(s.id).update({rep:Math.max(0,(d.rep||0)+n)});f.appendChild(b)});
+ if(!d.npc)[["+1",1],["+5",5],["−1",-1]].forEach(([l,n])=>{const b=el("button","b sm",l);b.onclick=()=>adm("admin_rep",{p_id:s.id,p_delta:n});f.appendChild(b)});
  const x=el("button","b sm del","Hapus");
- x.onclick=()=>{if(x.dataset.s!=="1"){x.dataset.s="1";x.textContent="Yakin hapus?";setTimeout(()=>{x.dataset.s="";x.textContent="Hapus"},3000);return}db.collection("characters").doc(s.id).delete().catch(()=>{x.textContent="Gagal"})};
+ x.onclick=()=>{if(x.dataset.s!=="1"){x.dataset.s="1";x.textContent="Yakin hapus?";setTimeout(()=>{x.dataset.s="";x.textContent="Hapus"},3000);return}adm("admin_delete_character",{p_id:s.id},x)};
  f.appendChild(x);return f};
 const renderChars=snap=>{
- lastSnap=snap;regUI();renderW();const L=$("list");L.textContent="";
+ lastSnap=snap;renderW();const L=$("list");L.textContent="";
  const fol=snap.docs.filter(s=>!s.data().npc),npc=snap.docs.filter(s=>s.data().npc),fg=fol.filter(s=>isGuru(s.data())),fm=fol.filter(s=>!fg.includes(s)),gu=npc.filter(s=>isGuru(s.data())),mu=npc.filter(s=>!gu.includes(s));
  $("a_f").textContent=$("c_f").textContent=fol.length;$("a_g").textContent=fg.length+gu.length;$("a_m").textContent=mu.length;$("c_g").textContent=fg.length+gu.length;$("c_m").textContent=mu.length;
  const set=sub==="follower"?fm:sub==="guru"?[...fg,...gu]:mu;
@@ -453,38 +469,38 @@ const renderChars=snap=>{
   if(isAdmin)c.appendChild(bar(s,d));
   g.appendChild(c)});
  L.appendChild(g)};
-const renderApps=snap=>{const L=$("apps");L.textContent="";$("a_ant").textContent=$("k_ant").textContent=snap.docs.length;
- if(snap.empty){L.appendChild(el("p","empty","Tidak ada antrean."));return}
+const renderApps=rows=>{const L=$("apps");L.textContent="";$("a_ant").textContent=$("k_ant").textContent=rows.length;
+ if(!rows.length){L.appendChild(el("p","empty","Tidak ada antrean."));return}
  const g=el("div","grid");
- snap.docs.forEach(s=>{const d=s.data(),c=idc(d,{label:"PENDAFTAR"}),f=el("div","idf");
+ rows.forEach(d=>{const c=idc(d,{label:"PENDAFTAR"}),f=el("div","idf");
   const ok=el("button","b sm pri","Setujui");
-  ok.onclick=async()=>{await db.collection("characters").doc(s.id).set({ig:d.ig,nama:d.nama,tipe:d.tipe||"murid",kelas:d.kelas,sifat:d.sifat,hobi:d.hobi,photo:d.photo||"",avatar:d.avatar||"",rep:0});await db.collection("applications").doc(s.id).delete()};
-  const no=el("button","b sm del","Tolak");no.onclick=()=>db.collection("applications").doc(s.id).delete();
+  ok.onclick=()=>{ok.disabled=true;adm("admin_approve",{p_owner:d.owner},ok)};
+  const no=el("button","b sm del","Tolak");no.onclick=()=>{no.disabled=true;adm("admin_reject",{p_owner:d.owner},no)};
   f.append(ok,no);c.appendChild(f);g.appendChild(c)});
  L.appendChild(g)};
-
-const renderRems=snap=>{const L=$("rems");L.textContent="";$("a_del").textContent=$("k_del").textContent=snap.docs.length;
- if(snap.empty){L.appendChild(el("p","empty","Tidak ada permintaan."));return}
+const renderRems=rows=>{const L=$("rems");L.textContent="";$("a_del").textContent=$("k_del").textContent=rows.length;
+ if(!rows.length){L.appendChild(el("p","empty","Tidak ada permintaan."));return}
  const g=el("div","grid");
- snap.docs.forEach(s=>{const d=s.data(),c=el("article","idc"),f=el("div","idf");
+ rows.forEach(d=>{const c=el("article","idc"),f=el("div","idf");
   c.style.setProperty("--h","var(--lav)");
   const h=el("div","idh");h.appendChild(el("span","","MINTA HAPUS"));c.appendChild(h);
-  const b=el("div","idb"),t=el("div");t.appendChild(el("div","name",d.nama||"Tanpa nama"));t.appendChild(el("div","meta",d.from==="character"?"Kartu warga":"Pendaftaran"));b.appendChild(t);c.appendChild(b);
+  const b=el("div","idb"),t=el("div");t.appendChild(el("div","name",d.nama||"Tanpa nama"));t.appendChild(el("div","meta",d.from_type==="character"?"Kartu warga":"Pendaftaran"));b.appendChild(t);c.appendChild(b);
   const ok=el("button","b sm pri","Setujui hapus");
-  ok.onclick=async()=>{ok.disabled=true;try{await db.collection("characters").doc(s.id).delete();await db.collection("applications").doc(s.id).delete();await db.collection("removals").doc(s.id).delete()}catch(e){ok.disabled=false;ok.textContent="Gagal"}};
-  const no=el("button","b sm del","Tolak");no.onclick=()=>db.collection("removals").doc(s.id).delete();
+  ok.onclick=()=>{ok.disabled=true;adm("admin_resolve_removal",{p_owner:d.owner,p_approve:true},ok)};
+  const no=el("button","b sm del","Tolak");no.onclick=()=>{no.disabled=true;adm("admin_resolve_removal",{p_owner:d.owner,p_approve:false},no)};
   f.append(ok,no);c.appendChild(f);g.appendChild(c)});
  L.appendChild(g)};
 let eps=[],curEp=null,epsOk=false;
+const delEp=(e,x)=>{if(x.dataset.s!=="1"){x.dataset.s="1";x.textContent="Yakin hapus?";setTimeout(()=>{x.dataset.s="";x.textContent="Hapus"},3000);return}adm("admin_delete_episode",{p_id:e.id},x)};
 const drawEps=()=>{const L=$("eplist");L.textContent="";
  if(!eps.length){L.appendChild(el("p","empty","Belum ada episode."));return}
  const g=el("div","grid");
  eps.forEach(e=>{const c=el("article","idc ep");c.style.setProperty("--h","var("+COL[(Number(e.no)||0)%4]+")");
   const h=el("div","idh");h.appendChild(el("span","","EPISODE "+e.no));c.appendChild(h);
-  if(e.panels&&e.panels[0]){const im=document.createElement("img");im.src="/_blob/"+e.panels[0];im.alt="";im.loading="lazy";c.appendChild(im)}
+  if(e.panels&&e.panels[0]){const im=document.createElement("img");im.src=pub(e.panels[0]);im.alt="";im.loading="lazy";c.appendChild(im)}
   const b=el("div","idb"),t=el("div");t.appendChild(el("div","name",e.judul));if(e.ringkasan)t.appendChild(el("div","meta",e.ringkasan));b.appendChild(t);c.appendChild(b);
   c.onclick=()=>openEp(e.id);
-  if(isAdmin){const f=el("div","idf"),x=el("button","b sm del","Hapus");x.onclick=ev=>{ev.stopPropagation();if(x.dataset.s!=="1"){x.dataset.s="1";x.textContent="Yakin hapus?";setTimeout(()=>{x.dataset.s="";x.textContent="Hapus"},3000);return}db.collection("episodes").doc(e.id).delete().catch(()=>{x.textContent="Gagal"})};f.appendChild(x);c.appendChild(f)}
+  if(isAdmin){const f=el("div","idf"),x=el("button","b sm del","Hapus");x.onclick=ev=>{ev.stopPropagation();delEp(e,x)};f.appendChild(x);c.appendChild(f)}
   g.appendChild(c)});
  L.appendChild(g)};
 const backEps=()=>{curEp=null;$("reader").classList.add("hide");$("eplist").classList.remove("hide");drawEps();scrollTo(0,0)};
@@ -492,7 +508,7 @@ const openEp=id=>{const i=eps.findIndex(x=>x.id===id);if(i<0)return;const e=eps[
  const R=$("reader");R.textContent="";
  const bk=el("button","b","Semua episode");bk.onclick=backEps;R.appendChild(bk);
  R.appendChild(el("h2","sh","Episode "+e.no+": "+e.judul));
- (e.panels||[]).forEach(p=>{const im=document.createElement("img");im.className="panel";im.loading="lazy";im.alt="Panel komik";im.src="/_blob/"+p;R.appendChild(im)});
+ (e.panels||[]).forEach(p=>{const im=document.createElement("img");im.className="panel";im.loading="lazy";im.alt="Panel komik";im.src=pub(p);R.appendChild(im)});
  if(e.teks){const t=el("div","paper story");e.teks.split(/\n+/).forEach(l=>t.appendChild(el("p","",l)));R.appendChild(t)}
  const n=el("div","rnav"),pv=el("button","b","Sebelumnya"),nx=el("button","b pri","Berikutnya");
  if(i>0)pv.onclick=()=>openEp(eps[i-1].id);else pv.classList.add("hide");
@@ -515,51 +531,51 @@ const renderEL=()=>{const L=$("elist");if(!L)return;L.textContent="";
  if(!eps.length){L.appendChild(el("p","empty","Belum ada episode."));return}
  eps.forEach(e=>{const r=el("div","erow");r.appendChild(el("span","","Ep "+e.no+": "+e.judul));
   const x=el("button","b sm del","Hapus");
-  x.onclick=()=>{if(x.dataset.s!=="1"){x.dataset.s="1";x.textContent="Yakin hapus?";setTimeout(()=>{x.dataset.s="";x.textContent="Hapus"},3000);return}db.collection("episodes").doc(e.id).delete().catch(()=>{x.textContent="Gagal"})};
+  x.onclick=()=>delEp(e,x);
   r.appendChild(x);L.appendChild(r)})};
 const genNpc=async(kind,n)=>{
- const roles=shuf(kind==="guru"?GJ:TP).slice(0,n),kel=$("g_kelas").value,used={};
+ const roles=shuf(kind==="guru"?GJ:TP).slice(0,n),kel=$("g_kelas").value,used={},items=[];
  for(const r of roles){
   let nama;do{nama=pick(NF)+" "+pick(NL)}while(used[nama]);used[nama]=1;
-  const o={npc:true,tipe:kind==="guru"?"guru":"murid",ig:"",rep:0};
-  if(kind==="guru"){const t=pick(["Pak","Bu"]);o.nama=t+" "+nama;o.kelas=r;o.sifat=pick(SF.filter(x=>x!=="pendiam"));o.avatar=t==="Pak"?"👨‍🏫":"👩‍🏫"}
+  const o={tipe:kind==="guru"?"guru":"murid"};
+  if(kind==="guru"){const t=pick(["Pak","Bu"]);o.nama=t+" "+nama;o.kelas=r;o.sifat=pick(SF.filter(x=>x!=="pendiam"));o.hobi="";o.avatar=t==="Pak"?"👨‍🏫":"👩‍🏫"}
   else{o.nama=nama;o.kelas=kel+" · "+r;o.sifat=pick(SF);o.hobi=pick(HB);o.avatar=pick(["🧑‍🎓","👧","👦","🧒"])}
-  await db.collection("characters").add(o);
- }};
+  items.push(o);
+ }
+ await rpc("admin_add_npcs",{p_pw:admPw,p_items:items});await loadChars()};
 const setupAdmin=()=>{
  [["g_guru","guru",3],["g_teman","teman",5]].forEach(([id,k,n])=>{$(id).onclick=async function(){this.disabled=true;
   try{await genNpc(k,n);$("g_msg").textContent="Ditambahkan."}catch(e){$("g_msg").textContent="Gagal: "+(e&&e.message||e)}
   this.disabled=false}});
  $("n_add").onclick=async()=>{const n=$("n_nama").value.trim();if(!n)return;
-  try{await db.collection("characters").add({npc:true,tipe:$("n_tipe").value,ig:"",nama:n,kelas:$("n_kelas").value.trim()||"Guru",sifat:$("n_sifat").value.trim(),hobi:$("n_hobi").value.trim(),avatar:$("n_av").value,rep:0});
-   ["n_nama","n_kelas","n_sifat","n_hobi"].forEach(i=>$(i).value="")}catch(e){$("g_msg").textContent="Gagal: "+(e&&e.message||e)}};
+  try{await rpc("admin_add_npcs",{p_pw:admPw,p_items:[{tipe:$("n_tipe").value,nama:n,kelas:$("n_kelas").value.trim()||"Guru",sifat:$("n_sifat").value.trim(),hobi:$("n_hobi").value.trim(),avatar:$("n_av").value}]});
+   ["n_nama","n_kelas","n_sifat","n_hobi"].forEach(i=>$(i).value="");$("g_msg").textContent="Ditambahkan.";await loadChars()}catch(e){$("g_msg").textContent="Gagal: "+(e&&e.message||e)}};
  $("e_add").onclick=async function(){const m=$("e_msg"),j=$("e_judul").value.trim(),t=$("e_teks").value.trim(),fs=[...$("e_img").files].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
   if(!j||(!fs.length&&!t)){m.textContent="Isi judul, lalu tambahkan gambar atau teks.";return}
   this.disabled=true;
-  try{const as=fs.length?await claude.use("assets"):null;if(fs.length&&!as)throw new Error("Upload gambar belum tersedia");
-   const ids=[];for(let i=0;i<fs.length;i++){m.textContent="Mengunggah "+(i+1)+"/"+fs.length+"…";ids.push((await as.upload(await resize(fs[i],1080))).id)}
-   await db.collection("episodes").add({no:Number($("e_no").value)||1,judul:j,ringkasan:$("e_sum").value.trim(),teks:t,panels:ids,at:Date.now()});
+  try{const ids=[];for(let i=0;i<fs.length;i++){m.textContent="Mengunggah "+(i+1)+"/"+fs.length+"…";ids.push(await upImg(await resize(fs[i],1080),"panels"))}
+   await rpc("admin_add_episode",{p_pw:admPw,p_no:Number($("e_no").value)||1,p_judul:j,p_ring:$("e_sum").value.trim(),p_teks:t,p_panels:ids});
+   await loadEps();
    m.textContent="Episode terbit.";["e_judul","e_sum","e_teks"].forEach(i=>$(i).value="");$("e_img").value="";$("e_no").value=(Number($("e_no").value)||1)+1}
   catch(e){m.textContent="Gagal: "+(e&&e.message||e)}
   this.disabled=false};
- db.collection("applications").onSnapshot(renderApps,()=>{});
- db.collection("removals").onSnapshot(renderRems,()=>{});
 };
 
+/* ---------- Muat data ---------- */
+const loadChars=async()=>{const {data:rows,error}=await sb.from("characters").select("*").order("rep",{ascending:false}).order("created_at");if(error)throw error;renderChars(snapOf(rows))};
+const loadEps=async()=>{const {data:rows,error}=await sb.from("episodes").select("*").order("no").order("created_at");if(error)throw error;renderEps(snapOf(rows))};
+const loadMine=async()=>{mine=await rpc("my_state",{p_owner:devId()});regUI()};
+const loadAdmin=async()=>{if(!isAdmin||!sb)return;try{const [a,r]=await Promise.all([rpc("admin_list_applications",{p_pw:admPw}),rpc("admin_list_removals",{p_pw:admPw})]);renderApps(a);renderRems(r)}catch(e){}};
+const refresh=()=>{if(!sb)return;loadChars().catch(()=>{});loadEps().catch(()=>{});loadMine().catch(()=>{});loadAdmin()};
+
 (async()=>{
- try{
-  if(!window.claude)return;
-  user=await claude.use("user");db=await claude.use("db");
-  if(!db)return;
-  uid=user&&await user.id();
-  try{const r=prof();if(r){const pr=await r.get();if(pr.exists&&pr.data().ig&&IGRE.test(pr.data().ig))setLogin(pr.data().ig,false)}}catch(e){}
-  isAdmin=false;
-  let wasA=false;try{wasA=sessionStorage.getItem(ADMK)==="1"}catch(e){}
-  if(wasA)unlockAdmin();else if(location.hash==="#admin")openPw();
-  if(uid){db.collection("applications").doc(uid).onSnapshot(x=>{myAppD=x.exists?x.data():null;regUI()},()=>{});db.collection("removals").doc(uid).onSnapshot(x=>{myRem=x.exists;regUI()},()=>{})}
-  db.collection("characters").orderBy("rep","desc").onSnapshot(renderChars,()=>{});
-  db.collection("episodes").orderBy("no","asc").onSnapshot(renderEps,()=>{});
- }catch(e){db=null}
+ if(!sb)return;
+ let pw="";try{pw=sessionStorage.getItem(ADMK)||""}catch(e){}
+ if(pw&&pw!=="1"){try{if(await rpc("admin_check",{p_pw:pw})){admPw=pw;unlockAdmin()}}catch(e){}}
+ if(!isAdmin&&location.hash==="#admin")openPw();
+ refresh();
+ setInterval(()=>{if(!document.hidden)refresh()},15000);
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
 })();
 setTimeout(()=>{if(!lastSnap)$("list").innerHTML="<p class=\"empty\">Daftar warga belum tersedia.</p>";if(!epsOk)$("eplist").innerHTML="<p class=\"empty\">Cerita belum tersedia.</p>"},4000);
 })();
