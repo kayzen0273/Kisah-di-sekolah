@@ -157,9 +157,9 @@ body.adm .wrap{max-width:1100px}
 </div>
 <div class="strip"><span>KISAH DI SEKOLAH ★ MURID BARU DITERIMA ★ KISAH DI SEKOLAH ★ MURID BARU DITERIMA ★ KISAH DI SEKOLAH ★ MURID BARU DITERIMA ★ KISAH DI SEKOLAH ★ MURID BARU DITERIMA ★ </span></div>
 <div class="steps">
-<div class="step"><span class="n">1</span><h3>Isi kartu warga</h3><p>Pilih murid atau guru, lalu isi username Instagram, nama karakter, kelas atau jabatan, sifat, dan hobi.</p></div>
-<div class="step"><span class="n">2</span><h3>Admin mengecek</h3><p>Kirim bukti donasi atau kode lewat DM Instagram, lalu admin menyetujui.</p></div>
-<div class="step"><span class="n">3</span><h3>Masuk daftar warga</h3><p>Karakter kamu bisa muncul di episode. Admin yang menentukan kapan dan seberapa sering.</p></div>
+<div class="step"><span class="n">1</span><h3>Isi kartu warga</h3><p>Pilih murid atau guru, lalu isi username Instagram, nama karakter, kelas atau jabatan, sifat, dan hobi. Kuota pendaftar terbatas per episode.</p></div>
+<div class="step"><span class="n">2</span><h3>Admin mengecek</h3><p>Daftar gratis. Admin menyetujui kartumu, lalu kartu mulai tampil.</p></div>
+<div class="step"><span class="n">3</span><h3>Tampil gratis dulu</h3><p>Kartu tampil gratis selama masa percobaan. Setelah expired, perpanjang lewat donasi dan kirim kode ke DM.</p></div>
 </div>
 <div class="stats">
 <div class="stat"><b id="c_f">0</b>warga follower</div>
@@ -231,6 +231,14 @@ body.adm .wrap{max-width:1100px}
 <div class="stat"><b id="a_ep">0</b>episode</div>
 </div>
 <p class="note">Halaman ini dibuka dengan password.</p>
+<div class="paper" style="margin-bottom:12px"><h4 style="margin-top:0">Pengaturan pendaftaran dan donasi</h4>
+<label for="s_ep">Episode aktif (nomor episode yang membuka pendaftaran)</label><input id="s_ep" type="number" min="1">
+<label for="s_quota">Kuota pendaftar per episode</label><input id="s_quota" type="number" min="1" max="200">
+<label for="s_days">Lama tampil gratis (hari)</label><input id="s_days" type="number" min="1" max="60">
+<label for="s_url">Link donasi (https://...)</label><input id="s_url" maxlength="300" placeholder="https://saweria.co/akunkamu" autocomplete="off">
+<label for="s_dm">Username Instagram untuk DM</label><input id="s_dm" maxlength="31" placeholder="@akunkamu" autocomplete="off" autocapitalize="off">
+<p class="note">Kuota penuh? Naikkan nomor episode aktif untuk membuka kuota baru.</p>
+<p><button class="b pri" id="s_save" type="button">Simpan pengaturan</button></p><div class="note" id="s_msg"></div></div>
 <div class="paper"><h4 style="margin-top:0">Ganti password admin</h4>
 <label for="pw_new">Password baru</label><input id="pw_new" type="password" autocomplete="new-password" maxlength="40">
 <p><button class="b pri" id="pw_save" type="button">Simpan password</button></p><div class="note" id="pw_sm"></div></div>
@@ -310,7 +318,7 @@ const GJ=["Wali Kelas","Kepala Sekolah","Wakil Kepala Sekolah","Guru Matematika"
 const TP=["Ketua Kelas","Wakil Ketua Kelas","Sekretaris","Bendahara","Seksi Kebersihan","Seksi Olahraga","Juara Kelas","Tukang Tidur","Tukang Jajan","Pelawak Kelas","Anak Basket","Anak Seni"];
 const SF=["ceria","pemalu","jahil","rajin","pelupa","tegas","sabar","humoris","galak tapi baik","pendiam","penasaran"];
 const HB=["basket","menggambar","membaca","musik","game","memasak","fotografi","futsal","menulis","berkebun"];
-let mine={card:null,app:null,removing:false},photoURL=null,photoFile=null,sb=null,isAdmin=false,admPw="",lastSnap=null,sub="follower";
+let info=null,admCodes={},mine={card:null,app:null,removing:false},photoURL=null,photoFile=null,sb=null,isAdmin=false,admPw="",lastSnap=null,sub="follower";
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const shuf=a=>a.slice().sort(()=>Math.random()-.5);
 const COL=["--pink","--yel","--sky","--lav"];
@@ -332,6 +340,7 @@ document.querySelectorAll("#side [data-p]").forEach(b=>b.onclick=()=>{document.q
 document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>go(b.dataset.t));
 document.querySelectorAll(".subnav [data-s]").forEach(b=>b.onclick=()=>{sub=b.dataset.s;document.querySelectorAll(".subnav .b").forEach(x=>x.classList.toggle("on",x===b));if(lastSnap)renderChars(lastSnap)});
 
+const expInfo=d=>{if(d.npc||!d.expires_at)return null;const ms=new Date(d.expires_at)-Date.now();if(ms<=0)return{expired:true,soon:false,txt:"EXPIRED"};const dd=Math.ceil(ms/864e5);return{expired:false,soon:dd<=1,txt:"Tampil: sisa "+dd+" hari"}};
 const idc=(d,o={})=>{
  const c=el("article","idc");c.style.setProperty("--h",col(d));
  const h=el("div","idh");h.appendChild(el("span","",o.label||"KARTU MURID"));if(o.right)h.appendChild(el("span","",o.right));c.appendChild(h);
@@ -342,6 +351,7 @@ const idc=(d,o={})=>{
  const t=el("div");[d.sifat,d.hobi].forEach(x=>{if(x)t.appendChild(el("span","tag",x))});g.appendChild(t);
  b.appendChild(g);c.appendChild(b);
  if(d.ig&&d.ig.length>1)c.appendChild(el("div","ig",d.ig));
+ const ex=expInfo(d);if(ex){const w=el("div","ig"),bd=el("span","tag",ex.txt);if(ex.expired){bd.style.cssText="background:var(--hot);color:#fff";c.style.filter="grayscale(.6)";c.style.opacity=".8"}w.appendChild(bd);c.appendChild(w)}
  return c};
 
 const cleanIg=v=>v.trim().replace(/^@+/,"").replace(/[^A-Za-z0-9._]/g,"").slice(0,30);
@@ -381,7 +391,7 @@ igUser=lsGet();renderLogin();
 /* ---------- Admin ---------- */
 let adminInit=false,swN=0,swT=null;
 const ADMK="kds_adm";
-const adminRefresh=()=>{if(lastSnap)renderChars(lastSnap);if(!curEp)drawEps();loadAdmin()};
+const adminRefresh=()=>{if(lastSnap)renderChars(lastSnap);if(!curEp)drawEps();loadAdmin();if(sb)loadInfo().catch(()=>{})};
 const unlockAdmin=()=>{isAdmin=true;try{sessionStorage.setItem(ADMK,admPw)}catch(e){}
  $("tabAdmin").classList.remove("hide");if(!adminInit){adminInit=true;setupAdmin()}adminRefresh();go("admin")};
 const lockAdmin=()=>{isAdmin=false;admPw="";try{sessionStorage.removeItem(ADMK)}catch(e){}
@@ -410,28 +420,53 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-sw]");if(!
 
 /* ---------- Kartu saya ---------- */
 const isGuru=d=>d.tipe?d.tipe==="guru":/^(Pak|Bu) /.test(d.nama||"");
+const A=(txt,href,cls)=>{const x=el("a","b "+(cls||""),txt);x.href=href;x.target="_blank";x.rel="noopener noreferrer";x.style.cssText="text-decoration:none;display:inline-block";return x};
+const dmUrl=()=>info&&info.dm_handle?"https://ig.me/m/"+info.dm_handle:"";
+const extBox=(code,state)=>{
+ const kb=el("div","msg"),days=info?info.days:3;
+ kb.appendChild(el("div","",{pending:"Gratis tampil "+days+" hari setelah disetujui admin. Mau tampil lebih lama? Donasi dulu.",ok:"Mau memperpanjang masa tampil? Donasi dulu, lalu kirim kode dan bukti lewat DM.",soon:"Masa tampil kartumu hampir habis. Perpanjang dengan donasi.",expired:"Kartumu EXPIRED. Perpanjang dengan donasi supaya tampil lagi."}[state]));
+ if(code){const l=el("div","note","Kode kamu. Kirim lewat DM bersama bukti donasi:");l.style.marginTop="8px";kb.appendChild(l);
+  const cd=el("div","name",code);cd.style.cssText="font-size:30px;letter-spacing:.08em;margin:4px 0;user-select:all";kb.appendChild(cd);
+  const cp=el("button","b sm","Salin kode");cp.type="button";
+  cp.onclick=()=>{const done=()=>{cp.textContent="Tersalin ✓";setTimeout(()=>{cp.textContent="Salin kode"},2000)};
+   try{navigator.clipboard.writeText(code).then(done,()=>{cp.textContent="Tekan lama kode di atas"})}catch(e){cp.textContent="Tekan lama kode di atas"}};
+  kb.appendChild(cp)}
+ const row=el("div","cta");row.style.marginTop="10px";
+ if(info&&info.donate_url)row.appendChild(A("💖 Donasi / Perpanjang",info.donate_url,"pri"));else row.appendChild(el("span","note","Link donasi belum diatur admin."));
+ if(dmUrl())row.appendChild(A("Kirim DM Instagram",dmUrl()));
+ kb.appendChild(row);return kb};
+const notify=()=>{let t=$("toast");const c=mine.card,ex=c?expInfo(c):null;
+ if(!ex||!(ex.expired||ex.soon)){if(t)t.remove();return}
+ const k=ex.expired?"e":"s";let dis="";try{dis=sessionStorage.getItem("kds_nt")||""}catch(e){}
+ if(t||dis===k)return;
+ t=el("div","msg");t.id="toast";t.setAttribute("role","status");t.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:40;max-width:440px;margin:0 auto;border:2px solid var(--hot);box-shadow:4px 4px 0 var(--sh)";
+ t.appendChild(el("div","",ex.expired?"🔔 Kartumu sudah EXPIRED. Perpanjang supaya tampil lagi.":"🔔 Masa tampil kartumu hampir habis."));
+ const r=el("div","cta");r.style.marginTop="8px";
+ const b1=el("button","b sm pri","Perpanjang");b1.onclick=()=>{t.remove();go("daftar")};
+ const b2=el("button","b sm","Tutup");b2.onclick=()=>{try{sessionStorage.setItem("kds_nt",k)}catch(e){}t.remove()};
+ r.append(b1,b2);t.appendChild(r);document.body.appendChild(t)};
+const fillSettings=()=>{if(!isAdmin||!info||!$("s_ep"))return;[["s_ep",info.episode],["s_quota",info.quota],["s_days",info.days],["s_url",info.donate_url],["s_dm",info.dm_handle?"@"+info.dm_handle:""]].forEach(([i,v])=>{if(document.activeElement!==$(i))$(i).value=v})};
+const renderQuota=()=>{let q=$("quota");if(!q){q=el("div","msg");q.id="quota";$("daftar").querySelector("h2").after(q)}
+ if(!info){q.classList.add("hide");return}
+ q.classList.remove("hide");const full=info.used>=info.quota;
+ q.textContent=full?"Kuota Episode "+info.episode+" sudah penuh ("+info.used+"/"+info.quota+"). Tunggu episode berikutnya dibuka.":"Episode "+info.episode+": "+info.used+" dari "+info.quota+" slot terisi. Daftar gratis, tampil "+info.days+" hari setelah disetujui. Perpanjang dengan donasi.";
+ $("kirim").disabled=full;fillSettings()};
 const regUI=()=>{
  if(!sb)return;
  const R=$("reg"),D=$("regdone"),c=mine.card,a=mine.app,myRem=mine.removing;
- if(!c&&!a){R.classList.remove("hide");D.classList.add("hide");D.textContent="";return}
+ if(!c&&!a){R.classList.remove("hide");D.classList.add("hide");D.textContent="";notify();return}
  R.classList.add("hide");D.classList.remove("hide");D.textContent="";
- const p=el("div","paper"),d=c||a;
+ const p=el("div","paper"),d=c||a,ex=c?expInfo(c):null;
  p.appendChild(el("h4","",c?"Kamu sudah jadi warga":"Pendaftaran menunggu admin"));
- p.appendChild(el("p","",c?"Satu perangkat hanya bisa punya satu kartu. Untuk daftar lagi, kartu ini harus dihapus dulu dengan persetujuan admin.":"Admin sedang mengecek kartumu. Kirim kode atau bukti donasi lewat DM Instagram."));
- if(!c&&a&&a.code){
-  const kb=el("div","msg");kb.appendChild(el("div","","Kode pendaftaranmu. Salin, lalu kirim lewat DM Instagram bersama bukti donasi:"));
-  const cd=el("div","name",a.code);cd.style.cssText="font-size:30px;letter-spacing:.08em;margin:6px 0;user-select:all";kb.appendChild(cd);
-  const cp=el("button","b sm pri","Salin kode");cp.type="button";
-  cp.onclick=()=>{const done=()=>{cp.textContent="Tersalin ✓";setTimeout(()=>{cp.textContent="Salin kode"},2000)};
-   try{navigator.clipboard.writeText(a.code).then(done,()=>{cp.textContent="Tekan lama kode di atas"})}catch(e){cp.textContent="Tekan lama kode di atas"}};
-  kb.appendChild(cp);p.appendChild(kb)}
- const card=idc(d,{label:c?(isGuru(c)?"GURU / STAF":"KARTU MURID"):"PENDAFTAR",right:!c&&a&&a.code?a.code:""});card.style.margin="12px 0";p.appendChild(card);
+ p.appendChild(el("p","",c?"Satu perangkat hanya bisa punya satu kartu. Untuk daftar lagi, kartu ini harus dihapus dulu dengan persetujuan admin.":"Admin sedang mengecek kartumu. Setelah disetujui, kartu tampil gratis dan masa tampil mulai dihitung."));
+ p.appendChild(extBox(d.code,c?(ex?(ex.expired?"expired":ex.soon?"soon":"ok"):"ok"):"pending"));
+ const card=idc(d,{label:c?(isGuru(c)?"GURU / STAF":"KARTU MURID"):"PENDAFTAR"});card.style.margin="12px 0";p.appendChild(card);
  if(myRem)p.appendChild(el("div","msg","Permintaan hapus sudah dikirim. Menunggu persetujuan admin."));
  else{const x=el("button","b del","Ajukan hapus kartu");
   x.onclick=()=>{if(x.dataset.s!=="1"){x.dataset.s="1";x.textContent="Yakin ajukan hapus?";setTimeout(()=>{x.dataset.s="";x.textContent="Ajukan hapus kartu"},3000);return}
    x.disabled=true;rpc("request_removal",{p_owner:devId()}).then(loadMine).catch(()=>{x.disabled=false;x.textContent="Gagal, coba lagi"})};
   p.appendChild(x)}
- D.appendChild(p)};
+ D.appendChild(p);notify()};
 const show=m=>{const b=$("fmsg");b.classList.remove("hide");b.textContent="";if(typeof m==="string")b.textContent=m;else b.appendChild(m)};
 $("kirim").onclick=async()=>{
  const d=data();
@@ -447,7 +482,7 @@ $("kirim").onclick=async()=>{
    show("Terkirim. Kode pendaftaranmu muncul di halaman ini.");
    await loadMine()}
   catch(e){show("Gagal kirim: "+(e&&e.message||e))}
-  finally{btn.disabled=false}
+  finally{btn.disabled=false;loadInfo().catch(()=>{})}
  }else{
   const txt="DAFTAR WARGA SEKOLAH\nIG: "+d.ig+"\nNama: "+d.nama+"\nTipe: "+d.tipe+"\nKelas/jabatan: "+d.kelas+"\nSifat: "+d.sifat+"\nHobi: "+d.hobi+"\nFoto: kirim lewat DM";
   const w=el("div");w.appendChild(el("div","","Pendaftaran online belum aktif. Salin teks ini dan kirim lewat DM Instagram:"));
@@ -460,6 +495,7 @@ $("kirim").onclick=async()=>{
 /* ---------- Render ---------- */
 const adm=async(fn,args,btn,after)=>{try{await rpc(fn,{p_pw:admPw,...args});await Promise.all([loadChars(),loadEps(),loadAdmin()]);if(after)after()}catch(e){if(btn){btn.disabled=false;btn.textContent="Gagal"}}};
 const bar=(s,d)=>{const f=el("div","idf");
+ if(!d.npc){const e=el("button","b sm pri","+"+(info?info.days:3)+" hari");e.onclick=()=>adm("admin_extend",{p_id:s.id});f.appendChild(e)}
  if(!d.npc)[["+1",1],["+5",5],["−1",-1]].forEach(([l,n])=>{const b=el("button","b sm",l);b.onclick=()=>adm("admin_rep",{p_id:s.id,p_delta:n});f.appendChild(b)});
  const x=el("button","b sm del","Hapus");
  x.onclick=()=>{if(x.dataset.s!=="1"){x.dataset.s="1";x.textContent="Yakin hapus?";setTimeout(()=>{x.dataset.s="";x.textContent="Hapus"},3000);return}adm("admin_delete_character",{p_id:s.id},x)};
@@ -473,7 +509,7 @@ const renderChars=snap=>{
  const g=el("div","grid");
  set.forEach((s,i)=>{const d=s.data(),npcc=!!d.npc;
   const c=idc(d,{label:sub==="guru"?"GURU / STAF":npcc?"MURID NPC":"KARTU MURID",right:npcc?"NPC":sub==="guru"?"★ "+(d.rep||0):"#"+(i+1)+"  ★ "+(d.rep||0)});
-  if(isAdmin)c.appendChild(bar(s,d));
+  if(isAdmin){if(admCodes[s.id])c.appendChild(el("div","ig","Kode: "+admCodes[s.id]));c.appendChild(bar(s,d))}
   g.appendChild(c)});
  L.appendChild(g)};
 const renderApps=rows=>{const L=$("apps");L.textContent="";$("a_ant").textContent=$("k_ant").textContent=rows.length;
@@ -527,11 +563,11 @@ const renderEps=snap=>{epsOk=true;eps=snap.docs.map(s=>({id:s.id,...s.data()}));
 const kindOf=d=>d.npc?"npc":isGuru(d)?"guru":"murid";
 const renderW=()=>{const L=$("wlist");if(!L||!lastSnap)return;L.textContent="";
  const q=$("w_q").value.trim().toLowerCase(),f=$("w_t").value;
- const set=lastSnap.docs.filter(s=>{const d=s.data();if(f&&kindOf(d)!==f)return false;return !q||[d.nama,d.ig,d.kelas].some(x=>String(x||"").toLowerCase().includes(q))});
+ const set=lastSnap.docs.filter(s=>{const d=s.data();if(f&&kindOf(d)!==f)return false;return !q||[d.nama,d.ig,d.kelas,admCodes[s.id]].some(x=>String(x||"").toLowerCase().includes(q))});
  $("w_n").textContent=set.length+" dari "+lastSnap.docs.length+" warga";
  if(!set.length){L.appendChild(el("p","empty","Tidak ada yang cocok."));return}
  const g=el("div","grid");
- set.forEach(s=>{const d=s.data(),c=idc(d,{label:{npc:"NPC",guru:"GURU / STAF",murid:"MURID"}[kindOf(d)],right:"★ "+(d.rep||0)});if(isAdmin)c.appendChild(bar(s,d));g.appendChild(c)});
+ set.forEach(s=>{const d=s.data(),c=idc(d,{label:{npc:"NPC",guru:"GURU / STAF",murid:"MURID"}[kindOf(d)],right:"★ "+(d.rep||0)});if(isAdmin){if(admCodes[s.id])c.appendChild(el("div","ig","Kode: "+admCodes[s.id]));c.appendChild(bar(s,d))}g.appendChild(c)});
  L.appendChild(g)};
 ["w_q","w_t"].forEach(i=>{$(i).oninput=renderW;$(i).onchange=renderW});
 const renderEL=()=>{const L=$("elist");if(!L)return;L.textContent="";
@@ -551,6 +587,7 @@ const genNpc=async(kind,n)=>{
  }
  await rpc("admin_add_npcs",{p_pw:admPw,p_items:items});await loadChars()};
 const setupAdmin=()=>{
+ $("s_save").onclick=async()=>{const m=$("s_msg");try{await rpc("admin_set_settings",{p_pw:admPw,p_episode:Number($("s_ep").value)||1,p_quota:Number($("s_quota").value)||10,p_days:Number($("s_days").value)||3,p_donate:$("s_url").value.trim(),p_dm:$("s_dm").value.trim()});await loadInfo();m.textContent="Pengaturan disimpan."}catch(e){m.textContent="Gagal: "+(e&&e.message||e)}};
  [["g_guru","guru",3],["g_teman","teman",5]].forEach(([id,k,n])=>{$(id).onclick=async function(){this.disabled=true;
   try{await genNpc(k,n);$("g_msg").textContent="Ditambahkan."}catch(e){$("g_msg").textContent="Gagal: "+(e&&e.message||e)}
   this.disabled=false}});
@@ -572,8 +609,9 @@ const setupAdmin=()=>{
 const loadChars=async()=>{const {data:rows,error}=await sb.from("characters").select("*").order("rep",{ascending:false}).order("created_at");if(error)throw error;renderChars(snapOf(rows))};
 const loadEps=async()=>{const {data:rows,error}=await sb.from("episodes").select("*").order("no").order("created_at");if(error)throw error;renderEps(snapOf(rows))};
 const loadMine=async()=>{mine=await rpc("my_state",{p_owner:devId()});regUI()};
-const loadAdmin=async()=>{if(!isAdmin||!sb)return;try{const [a,r]=await Promise.all([rpc("admin_list_applications",{p_pw:admPw}),rpc("admin_list_removals",{p_pw:admPw})]);renderApps(a);renderRems(r)}catch(e){}};
-const refresh=()=>{if(!sb)return;loadChars().catch(()=>{});loadEps().catch(()=>{});loadMine().catch(()=>{});loadAdmin()};
+const loadInfo=async()=>{info=await rpc("public_info",{});renderQuota();regUI();if(lastSnap)renderChars(lastSnap)};
+const loadAdmin=async()=>{if(!isAdmin||!sb)return;try{const [a,r,cd]=await Promise.all([rpc("admin_list_applications",{p_pw:admPw}),rpc("admin_list_removals",{p_pw:admPw}),rpc("admin_codes",{p_pw:admPw})]);admCodes=cd||{};renderApps(a);renderRems(r);if(lastSnap)renderChars(lastSnap)}catch(e){}};
+const refresh=()=>{if(!sb)return;loadChars().catch(()=>{});loadEps().catch(()=>{});loadMine().catch(()=>{});loadInfo().catch(()=>{});loadAdmin()};
 
 (async()=>{
  if(!sb)return;
