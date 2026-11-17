@@ -106,7 +106,7 @@ textarea.out{min-height:140px;font-size:14px}
 
 <div class="page">
   <header>
-    <h1>Kisah di Sekolah</h1>
+    <h1 id="site-title">Kisah di Sekolah</h1>
     <p class="tag">Dukung episode berikutnya, tulis cerita yang kamu mau, lalu pantau antriannya.</p>
   </header>
 
@@ -256,7 +256,7 @@ textarea.out{min-height:140px;font-size:14px}
     <form class="card" id="login-form" autocomplete="on">
       <h2>Masuk admin</h2>
       <p class="muted">Khusus pemilik halaman. Pengikut tidak perlu masuk.</p>
-      <label class="field"><span>Email</span><input id="lemail" name="lemail" type="email" required autocomplete="username"></label>
+      <label class="field"><span>Username</span><input id="luser" name="luser" type="text" required autocomplete="username"></label>
       <label class="field"><span>Kata sandi</span><input id="lpass" name="lpass" type="password" required autocomplete="current-password"></label>
       <button class="btn primary" type="submit" id="login-submit">Masuk</button>
       <p class="msg" id="login-msg" hidden></p>
@@ -264,7 +264,7 @@ textarea.out{min-height:140px;font-size:14px}
     <div class="card" id="login-state" hidden></div>
   </section>
 
-  <footer class="muted" style="text-align:center"><a href="#masuk">Masuk admin</a></footer>
+  <footer class="muted" style="text-align:center">&copy; Kisah di Sekolah</footer>
 </div>
 
 
@@ -279,6 +279,9 @@ textarea.out{min-height:140px;font-size:14px}
 var SUPABASE_URL='https://jwuhwpqfgvuqvtsajbia.supabase.co';
 var SUPABASE_KEY='sb_publishable_xpYm-_LmjRTutWOHfbEEww_pmi1-lGR';
 var BUCKET='photos';
+/* Username admin disimpan di Supabase Auth sebagai email "<username>@ADMIN_EMAIL_DOMAIN"
+   supaya tidak perlu email asli. Form login hanya minta username. */
+var ADMIN_EMAIL_DOMAIN='admin.kisahdisekolah.internal';
 
 var $=function(s){return document.querySelector(s);};
 var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s));};
@@ -867,13 +870,27 @@ $('#login-form').addEventListener('submit',function(e){
   e.preventDefault();
   var f=e.target.elements,msg=$('#login-msg'),btn=$('#login-submit');
   if(!S.sb)return;
+  var u=f.luser.value.trim().toLowerCase();
+  if(!u){say(msg,'Isi username.','err');return;}
   btn.disabled=true;
-  S.sb.auth.signInWithPassword({email:f.lemail.value.trim(),password:f.lpass.value}).then(function(r){
-    if(r.error){say(msg,'Email atau kata sandi salah.','err');btn.disabled=false;return;}
+  S.sb.auth.signInWithPassword({email:u+'@'+ADMIN_EMAIL_DOMAIN,password:f.lpass.value}).then(function(r){
+    if(r.error){say(msg,'Username atau kata sandi salah.','err');btn.disabled=false;return;}
     location.hash='#admin';location.reload();
   },function(){say(msg,'Belum bisa masuk. Coba lagi.','err');btn.disabled=false;});
 });
 $('#logout').addEventListener('click',logout);
+
+/* Pintu rahasia: klik judul 7x berturut-turut (jeda <1.5 detik) untuk membuka form masuk admin.
+   Tidak ada tombol/link "Masuk admin" yang terlihat di halaman untuk pengunjung biasa. */
+(function(){
+  var n=0,t=0;
+  $('#site-title').addEventListener('click',function(){
+    var now=Date.now();
+    if(now-t>1500)n=0;
+    t=now;n++;
+    if(n>=7){n=0;location.hash='#masuk';}
+  });
+})();
 
 /* ---------- data ---------- */
 var chain=Promise.resolve();
