@@ -159,7 +159,7 @@ body.adm .wrap{max-width:1100px}
 <div class="steps">
 <div class="step"><span class="n">1</span><h3>Isi kartu warga</h3><p>Pilih murid atau guru, lalu isi username Instagram, nama karakter, kelas atau jabatan, sifat, dan hobi. Kuota pendaftar terbatas per episode.</p></div>
 <div class="step"><span class="n">2</span><h3>Admin mengecek</h3><p>Daftar gratis. Admin menyetujui kartumu, lalu kartu mulai tampil.</p></div>
-<div class="step"><span class="n">3</span><h3>Tampil gratis dulu</h3><p>Kartu tampil gratis selama masa percobaan. Setelah expired, perpanjang lewat donasi dan kirim kode ke DM.</p></div>
+<div class="step"><span class="n">3</span><h3>Tampil gratis dulu</h3><p>Kartu tampil gratis selama masa percobaan. Setelah expired, perpanjang masa tampil dan kirim kode ke DM.</p></div>
 </div>
 <div class="stats">
 <div class="stat"><b id="c_f">0</b>warga follower</div>
@@ -231,11 +231,11 @@ body.adm .wrap{max-width:1100px}
 <div class="stat"><b id="a_ep">0</b>episode</div>
 </div>
 <p class="note">Halaman ini dibuka dengan password.</p>
-<div class="paper" style="margin-bottom:12px"><h4 style="margin-top:0">Pengaturan pendaftaran dan donasi</h4>
+<div class="paper" style="margin-bottom:12px"><h4 style="margin-top:0">Pengaturan pendaftaran dan perpanjangan</h4>
 <label for="s_ep">Episode aktif (nomor episode yang membuka pendaftaran)</label><input id="s_ep" type="number" min="1">
 <label for="s_quota">Kuota pendaftar per episode</label><input id="s_quota" type="number" min="1" max="200">
 <label for="s_days">Lama tampil gratis (hari)</label><input id="s_days" type="number" min="1" max="60">
-<label for="s_url">Link donasi (https://...)</label><input id="s_url" maxlength="300" placeholder="https://saweria.co/akunkamu" autocomplete="off">
+<label for="s_url">Link traktir kopi, misalnya Saweria atau Trakteer (https://...)</label><input id="s_url" maxlength="300" placeholder="https://saweria.co/akunkamu" autocomplete="off">
 <label for="s_dm">Username Instagram untuk DM</label><input id="s_dm" maxlength="31" placeholder="@akunkamu" autocomplete="off" autocapitalize="off">
 <p class="note">Kuota penuh? Naikkan nomor episode aktif untuk membuka kuota baru.</p>
 <p><button class="b pri" id="s_save" type="button">Simpan pengaturan</button></p><div class="note" id="s_msg"></div></div>
@@ -424,15 +424,15 @@ const A=(txt,href,cls)=>{const x=el("a","b "+(cls||""),txt);x.href=href;x.target
 const dmUrl=()=>info&&info.dm_handle?"https://ig.me/m/"+info.dm_handle:"";
 const extBox=(code,state)=>{
  const kb=el("div","msg"),days=info?info.days:3;
- kb.appendChild(el("div","",{pending:"Gratis tampil "+days+" hari setelah disetujui admin. Mau tampil lebih lama? Donasi dulu.",ok:"Mau memperpanjang masa tampil? Donasi dulu, lalu kirim kode dan bukti lewat DM.",soon:"Masa tampil kartumu hampir habis. Perpanjang dengan donasi.",expired:"Kartumu EXPIRED. Perpanjang dengan donasi supaya tampil lagi."}[state]));
- if(code){const l=el("div","note","Kode kamu. Kirim lewat DM bersama bukti donasi:");l.style.marginTop="8px";kb.appendChild(l);
+ kb.appendChild(el("div","",{pending:"Gratis tampil "+days+" hari setelah disetujui admin. Mau tampil lebih lama? Perpanjang masa tampil.",ok:"Mau memperpanjang masa tampil? Traktir kopi dulu lewat tombol di bawah, lalu kirim kode dan buktinya lewat DM.",soon:"Masa tampil kartumu hampir habis. Perpanjang sekarang.",expired:"Kartumu EXPIRED. Perpanjang supaya tampil lagi."}[state]));
+ if(code){const l=el("div","note","Kode kamu. Kirim lewat DM bersama bukti traktir:");l.style.marginTop="8px";kb.appendChild(l);
   const cd=el("div","name",code);cd.style.cssText="font-size:30px;letter-spacing:.08em;margin:4px 0;user-select:all";kb.appendChild(cd);
   const cp=el("button","b sm","Salin kode");cp.type="button";
   cp.onclick=()=>{const done=()=>{cp.textContent="Tersalin ✓";setTimeout(()=>{cp.textContent="Salin kode"},2000)};
    try{navigator.clipboard.writeText(code).then(done,()=>{cp.textContent="Tekan lama kode di atas"})}catch(e){cp.textContent="Tekan lama kode di atas"}};
   kb.appendChild(cp)}
  const row=el("div","cta");row.style.marginTop="10px";
- if(info&&info.donate_url)row.appendChild(A("💖 Donasi / Perpanjang",info.donate_url,"pri"));else row.appendChild(el("span","note","Link donasi belum diatur admin."));
+ if(info&&info.donate_url)row.appendChild(A("☕ Traktir kopi dulu di sini",info.donate_url,"pri"));else row.appendChild(el("span","note","Link traktir kopi belum diatur admin."));
  if(dmUrl())row.appendChild(A("Kirim DM Instagram",dmUrl()));
  kb.appendChild(row);return kb};
 const notify=()=>{let t=$("toast");const c=mine.card,ex=c?expInfo(c):null;
@@ -449,7 +449,7 @@ const fillSettings=()=>{if(!isAdmin||!info||!$("s_ep"))return;[["s_ep",info.epis
 const renderQuota=()=>{let q=$("quota");if(!q){q=el("div","msg");q.id="quota";$("daftar").querySelector("h2").after(q)}
  if(!info){q.classList.add("hide");return}
  q.classList.remove("hide");const full=info.used>=info.quota;
- q.textContent=full?"Kuota Episode "+info.episode+" sudah penuh ("+info.used+"/"+info.quota+"). Tunggu episode berikutnya dibuka.":"Episode "+info.episode+": "+info.used+" dari "+info.quota+" slot terisi. Daftar gratis, tampil "+info.days+" hari setelah disetujui. Perpanjang dengan donasi.";
+ q.textContent=full?"Kuota Episode "+info.episode+" sudah penuh ("+info.used+"/"+info.quota+"). Tunggu episode berikutnya dibuka.":"Episode "+info.episode+": "+info.used+" dari "+info.quota+" slot terisi. Daftar gratis, tampil "+info.days+" hari setelah disetujui. Perpanjang masa tampil kapan saja.";
  $("kirim").disabled=full;fillSettings()};
 const regUI=()=>{
  if(!sb)return;
