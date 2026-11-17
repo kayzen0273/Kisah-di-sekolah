@@ -1,0 +1,968 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kisah di Sekolah</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: satu kolom 680px. Judul dengan garis bawah pink seperti komiknya, tab langkah, empat tampilan (dukung, cerita, antrian, admin) yang berganti lewat hash. */
+:root{
+  --bg:#f6f3fb;--surface:#ffffff;--fg:#262a40;--muted:#5e6382;--line:#d9d3ea;
+  --accent:#b3416f;--accent-fg:#ffffff;--accent-soft:#f8e4ed;
+  --lav:#e9e3f8;--slate:#4a5a80;
+  --ok:#1b6e45;--ok-soft:#dcf2e6;--warn:#8a5200;--warn-soft:#fdeecb;--bad:#a8261f;--bad-soft:#fbe2df;
+  --display:"Fredoka","Trebuchet MS",system-ui,sans-serif;
+  --body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16172b;--surface:#202240;--fg:#ece9f8;--muted:#a9acc9;--line:#363962;
+    --accent:#f08cb5;--accent-fg:#2b0e1d;--accent-soft:#40243a;
+    --lav:#2b2d54;--slate:#a7b6e0;
+    --ok:#72d9a3;--ok-soft:#1b3a2c;--warn:#f2c466;--warn-soft:#3b2f12;--bad:#ff9d95;--bad-soft:#44201f;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16172b;--surface:#202240;--fg:#ece9f8;--muted:#a9acc9;--line:#363962;
+  --accent:#f08cb5;--accent-fg:#2b0e1d;--accent-soft:#40243a;
+  --lav:#2b2d54;--slate:#a7b6e0;
+  --ok:#72d9a3;--ok-soft:#1b3a2c;--warn:#f2c466;--warn-soft:#3b2f12;--bad:#ff9d95;--bad-soft:#44201f;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6}
+.page{max-width:680px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.2;margin:0;text-wrap:balance}
+h1{font-size:clamp(2rem,8vw,2.8rem);position:relative;width:fit-content;padding-bottom:8px}
+h1::after{content:"";position:absolute;left:0;bottom:0;width:72%;height:6px;border-radius:6px;background:var(--accent)}
+h2{font-size:1.3rem}
+h3{font-size:1.05rem;font-weight:500}
+p{margin:0}
+.tag{color:var(--muted);margin-top:10px;max-width:46ch}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;background:var(--lav);padding:6px;border-radius:14px}
+.tabs a{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 6px;border-radius:10px;text-decoration:none;color:var(--slate);font-weight:600;font-size:.9rem;min-width:0}
+.tabs a b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--surface);font-size:.75rem;flex:none}
+.tabs a[aria-current="page"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 0 var(--line)}
+.tabs a[hidden]{display:none}
+
+.status{font-size:.85rem;color:var(--muted);background:var(--warn-soft);color:var(--warn);padding:8px 12px;border-radius:10px}
+section{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.bubble{position:relative;background:var(--accent-soft);border-radius:18px;padding:14px 16px;color:var(--fg)}
+.bubble::after{content:"";position:absolute;left:28px;bottom:-8px;width:16px;height:16px;background:var(--accent-soft);transform:rotate(45deg);border-radius:0 0 4px 0}
+.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;counter-increment:s}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--slate);color:var(--bg);font-weight:700;font-size:.85rem}
+.muted{color:var(--muted);font-size:.88rem}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 .95rem var(--body);padding:10px 16px;border-radius:12px;cursor:pointer;text-decoration:none;min-height:42px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.small{min-height:34px;padding:6px 12px;font-size:.85rem}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+form{display:flex;flex-direction:column;gap:14px;min-width:0}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field>span,.lbl{font-weight:600;font-size:.88rem}
+.field small{color:var(--muted);font-size:.8rem}
+input,select,textarea{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:96px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:.92rem}
+.check input{width:20px;height:20px;margin-top:2px;flex:none}
+.msg{padding:10px 12px;border-radius:10px;font-size:.9rem;background:var(--lav)}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+
+.pill{display:inline-block;font-size:.76rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--lav);color:var(--slate);white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.work{background:var(--accent-soft);color:var(--accent)}
+.cardhead{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;min-width:0}
+.item.mine{border-color:var(--accent);background:var(--accent-soft)}
+.item.done{opacity:.7}
+.num{font-family:var(--display);font-weight:600;font-size:1.25rem;color:var(--accent);text-align:center;font-variant-numeric:tabular-nums}
+.item .who{font-weight:700;overflow-wrap:anywhere}
+.item .meta{color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
+.empty{border:1.5px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted)}
+.sum{display:flex;flex-wrap:wrap;gap:8px}
+.admrow{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.admrow .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.9rem}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.admrow select{width:auto;padding:6px 10px;font-size:14px}
+textarea.out{min-height:140px;font-size:14px}
+.photo-prev{max-width:min(100%,240px);border-radius:12px;border:1px solid var(--line);display:block}
+@media (max-width:460px){.two{grid-template-columns:1fr}.item{grid-template-columns:36px 1fr}.item .pill{grid-column:2;justify-self:start}}
+</style>
+
+<div class="page">
+  <header>
+    <h1>Kisah di Sekolah</h1>
+    <p class="tag">Dukung episode berikutnya, tulis cerita yang kamu mau, lalu pantau antriannya.</p>
+  </header>
+
+  <nav class="tabs" aria-label="Langkah">
+    <a href="#dukung" data-v="dukung"><b>1</b>Dukung</a>
+    <a href="#cerita" data-v="cerita"><b>2</b>Cerita</a>
+    <a href="#antrian" data-v="antrian"><b>3</b>Antrian</a>
+    <a href="#admin" data-v="admin" id="tab-admin" hidden>Admin</a>
+  </nav>
+
+  <div id="status" class="status" role="status" hidden></div>
+
+  <!-- 1. DUKUNG -->
+  <section data-v="dukung" hidden>
+    <div class="bubble"><p>Setiap episode lahir dari dukunganmu. Setelah donasimu terverifikasi, kamu bisa menentukan cerita yang kamu mau.</p></div>
+    <div class="card">
+      <h2>Cara ikut serta</h2>
+      <ol class="steps">
+        <li><span>Masuk dengan username Instagram, lalu kirim kode verifikasi lewat DM.</span></li>
+        <li><span>Donasi lewat tautan di bawah.</span></li>
+        <li><span>Konfirmasi donasimu supaya bisa dicek.</span></li>
+        <li><span>Setelah terverifikasi, formulir cerita terbuka dan ceritamu masuk antrian.</span></li>
+      </ol>
+      <div class="row" id="links"></div>
+      <p class="muted" id="links-note"></p>
+    </div>
+
+    <div class="card" id="ig-card" hidden>
+      <h2>Masuk dengan Instagram</h2>
+      <form id="ig-form" autocomplete="off">
+        <label class="field"><span>Username Instagram</span><input id="igname" name="igname" maxlength="31" placeholder="@namakamu" autocapitalize="none" autocorrect="off" spellcheck="false" required><small>Kamu akan membuktikan akun ini milikmu lewat DM, jadi pakai akun yang benar-benar kamu pegang.</small></label>
+        <button class="btn primary" type="submit" id="ig-submit">Minta kode verifikasi</button>
+        <p class="msg" id="ig-msg" hidden></p>
+      </form>
+      <div id="ig-state" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+
+    <p class="msg" id="dm-note" hidden></p>
+
+    <form class="card" id="claim-form" hidden autocomplete="off">
+      <h2>Konfirmasi donasi</h2>
+      <div class="two">
+        <label class="field"><span>Akun Instagram</span><input id="cname" name="cname" required readonly maxlength="60" placeholder="@namakamu"></label>
+        <label class="field"><span>Nominal (Rp)</span><input id="camount" name="camount" type="number" inputmode="numeric" min="1000" step="1000" required placeholder="10000"></label>
+      </div>
+      <div class="two">
+        <label class="field"><span>Donasi lewat</span><select id="cplatform" name="cplatform"></select></label>
+        <label class="field"><span>Nomor referensi</span><input id="cref" name="cref" required maxlength="80" placeholder="4 digit akhir ID transaksi"><small>Atau nama pengirim yang tertera di bukti.</small></label>
+      </div>
+      <button class="btn primary" type="submit" id="claim-submit">Kirim konfirmasi</button>
+      <p class="msg" id="claim-msg" hidden></p>
+    </form>
+    <div class="card" id="claim-state" hidden></div>
+  </section>
+
+  <!-- 2. CERITA -->
+  <section data-v="cerita" hidden>
+    <div class="card" id="story-lock" hidden>
+      <h2>Formulir terkunci</h2>
+      <p id="story-lock-text"></p>
+      <a class="btn primary" href="#dukung" style="align-self:flex-start">Ke langkah donasi</a>
+    </div>
+
+    <div class="card" id="story-done" hidden></div>
+
+    <form class="card" id="story-form" hidden autocomplete="off">
+      <h2>Ceritamu</h2>
+      <p class="msg" id="story-banner"></p>
+      <div class="two">
+        <label class="field"><span>Nama panggilan di cerita</span><input id="sname" name="sname" required maxlength="40" placeholder="Rina"></label>
+        <label class="field"><span>Kelas</span><input id="kelas" name="kelas" maxlength="20" placeholder="10 IPS"></label>
+      </div>
+      <label class="field"><span>Sifat atau ciri khas</span><input id="traits" name="traits" maxlength="120" placeholder="jago masak, pemalu, suka bawa payung"></label>
+      <div class="two">
+        <label class="field"><span>Lokasi kejadian</span>
+          <select id="setting" name="setting">
+            <option>Kantin</option><option>Perpustakaan</option><option>Lapangan basket</option><option>Gerbang sekolah</option><option>Taman belakang</option><option>Pilihan penulis</option>
+          </select></label>
+        <label class="field"><span>Nuansa</span>
+          <select id="mood" name="mood">
+            <option>Manis</option><option>Lucu</option><option>Deg-degan</option><option>Sedikit drama</option>
+          </select></label>
+      </div>
+      <label class="field"><span>Cerita yang kamu mau</span><textarea id="plot" name="plot" required maxlength="1200" placeholder="Ceritakan apa yang terjadi di episode ini."></textarea></label>
+      <label class="field"><span>Kalimat yang ingin diucapkan tokoh (opsional)</span><textarea id="dialog" name="dialog" maxlength="400" style="min-height:64px"></textarea></label>
+      <div class="field" id="photo-field">
+        <span>Foto untuk jadi karakter (opsional)</span>
+        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp">
+        <small>Pakai foto dirimu sendiri dengan wajah terlihat jelas. Foto dikecilkan dan data lokasinya dihapus sebelum diunggah. Hanya admin yang bisa melihatnya.</small>
+        <img id="photo-prev" class="photo-prev" alt="Pratinjau foto" hidden>
+        <label class="check" id="photo-consent-row" hidden><input type="checkbox" id="photoconsent" name="photoconsent"><span>Ini fotoku sendiri dan aku setuju fotonya dipakai sebagai acuan karakter di cerita.</span></label>
+      </div>
+      <p class="muted" id="photo-dm" hidden></p>
+      <p class="muted">Nama panggilanmu akan tampil di antrian publik.</p>
+      <button class="btn primary" type="submit" id="story-submit">Masukkan ke antrian</button>
+      <p class="msg" id="story-msg" hidden></p>
+      <div id="dm-box" hidden>
+        <label class="field"><span>Ringkasan untuk dikirim lewat DM</span><textarea class="out" id="dm-out" readonly></textarea></label>
+        <button class="btn" type="button" id="dm-copy" style="margin-top:10px">Salin ringkasan</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- 3. ANTRIAN -->
+  <section data-v="antrian" hidden>
+    <h2>Antrian cerita</h2>
+    <div class="sum" id="q-sum"></div>
+    <p class="msg" id="q-mine" hidden></p>
+    <ul class="list" id="q-list"></ul>
+  </section>
+
+  <!-- ADMIN -->
+  <section data-v="admin" hidden>
+    <div class="sum" id="adm-sum"></div>
+    <div class="row"><a class="btn" href="#cerita">Tambah cerita dari DM</a><button class="btn" type="button" id="logout">Keluar</button></div>
+
+    <h2>Verifikasi Instagram</h2>
+    <p class="muted">Setujui hanya setelah DM berisi kode itu benar-benar masuk dari akun tersebut.</p>
+    <div class="list" id="adm-ig"></div>
+
+    <h2>Konfirmasi donasi</h2>
+    <div class="list" id="adm-claims"></div>
+
+    <h2>Antrian</h2>
+    <div class="list" id="adm-queue"></div>
+
+    <form class="card" id="settings-form" autocomplete="off">
+      <h2>Pengaturan donasi</h2>
+      <div class="two">
+        <label class="field"><span>Platform 1</span><input id="l1label" name="l1label" maxlength="30" placeholder="Saweria"></label>
+        <label class="field"><span>Tautan 1</span><input id="l1url" name="l1url" inputmode="url" placeholder="https://saweria.co/namamu"></label>
+      </div>
+      <div class="two">
+        <label class="field"><span>Platform 2</span><input id="l2label" name="l2label" maxlength="30" placeholder="Trakteer"></label>
+        <label class="field"><span>Tautan 2</span><input id="l2url" name="l2url" inputmode="url" placeholder="https://trakteer.id/namamu"></label>
+      </div>
+      <div class="two">
+        <label class="field"><span>Donasi minimum (Rp)</span><input id="minamount" name="minamount" type="number" min="0" step="1000" placeholder="10000"></label>
+        <label class="field"><span>Akun untuk DM</span><input id="dm" name="dm" maxlength="40" placeholder="@akunmu"></label>
+      </div>
+      <button class="btn primary" type="submit">Simpan pengaturan</button>
+      <p class="msg" id="settings-msg" hidden></p>
+    </form>
+  </section>
+  <!-- MASUK ADMIN -->
+  <section data-v="masuk" hidden>
+    <form class="card" id="login-form" autocomplete="on">
+      <h2>Masuk admin</h2>
+      <p class="muted">Khusus pemilik halaman. Pengikut tidak perlu masuk.</p>
+      <label class="field"><span>Email</span><input id="lemail" name="lemail" type="email" required autocomplete="username"></label>
+      <label class="field"><span>Kata sandi</span><input id="lpass" name="lpass" type="password" required autocomplete="current-password"></label>
+      <button class="btn primary" type="submit" id="login-submit">Masuk</button>
+      <p class="msg" id="login-msg" hidden></p>
+    </form>
+    <div class="card" id="login-state" hidden></div>
+  </section>
+
+  <footer class="muted" style="text-align:center"><a href="#masuk">Masuk admin</a></footer>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- konfigurasi Supabase ----------
+   Kunci "publishable" memang aman ditaruh di halaman publik:
+   akses data dibatasi oleh aturan RLS di database. */
+var SUPABASE_URL='https://jwuhwpqfgvuqvtsajbia.supabase.co';
+var SUPABASE_KEY='sb_publishable_xpYm-_LmjRTutWOHfbEEww_pmi1-lGR';
+var BUCKET='photos';
+
+var $=function(s){return document.querySelector(s);};
+var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s));};
+function el(tag,props){
+  var n=document.createElement(tag);
+  props=props||{};
+  Object.keys(props).forEach(function(k){
+    var v=props[k];
+    if(k==='class')n.className=v;
+    else if(k==='text')n.textContent=v;
+    else if(k.indexOf('on')===0)n.addEventListener(k.slice(2),v);
+    else if(v===true)n.setAttribute(k,'');
+    else if(v!==false&&v!=null)n.setAttribute(k,v);
+  });
+  for(var i=2;i<arguments.length;i++){
+    [].concat(arguments[i]).forEach(function(c){
+      if(c==null||c===false)return;
+      n.append(c.nodeType?c:document.createTextNode(String(c)));
+    });
+  }
+  return n;
+}
+var nf=new Intl.NumberFormat('id-ID');
+function rp(n){return 'Rp'+nf.format(Number(n)||0);}
+var df=new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+function when(ms){return ms?df.format(new Date(ms)):'';}
+function say(node,text,kind){node.textContent=text||'';node.className='msg'+(kind?' '+kind:'');node.hidden=!text;}
+function pill(text,kind){return el('span',{class:'pill'+(kind?' '+kind:''),text:text});}
+function safeUrl(u){try{var x=new URL(String(u));return x.protocol==='https:'?x.href:null;}catch(e){return null;}}
+function uuid(){
+  if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){
+    var r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16);
+  });
+}
+var STATUS={antri:'Antri',dikerjakan:'Dikerjakan',selesai:'Selesai',batal:'Dibatalkan'};
+var STATUS_KIND={antri:'warn',dikerjakan:'work',selesai:'ok',batal:''};
+
+var S={
+  ready:false,sb:null,uid:null,email:null,admin:false,authError:false,
+  settings:{links:[],minAmount:10000,dm:''},settingsFilled:false,settingsLoaded:false,
+  queue:[],         // antrian publik (semua orang)
+  myClaims:[],myStories:[],myIds:{},   // milik pengikut ini
+  claims:[],stories:[],profiles:[],   // khusus admin
+  myProfile:null,
+  loaded:false,loadError:'',lastDone:null,openBrief:{},photoUrls:{}
+};
+
+/* ---------- normalisasi baris database ---------- */
+function ms(x){return x?Date.parse(x):0;}
+function normQ(r){return {id:r.story_id,name:r.display_name,setting:r.setting,mood:r.mood,status:r.status,createdAt:ms(r.created_at)};}
+function normStory(r){return {id:r.id,uid:r.user_id,name:r.display_name,kelas:r.kelas,traits:r.traits,setting:r.setting,mood:r.mood,plot:r.plot,dialog:r.dialog,photoPath:r.photo_path,status:r.status,source:r.source,createdAt:ms(r.created_at)};}
+function normProfile(r){return {uid:r.user_id,username:r.username,code:r.code,status:r.status,createdAt:ms(r.created_at)};}
+function normClaim(r){return {id:r.id,uid:r.user_id,name:r.name,amount:r.amount,platform:r.platform,ref:r.ref,status:r.status,createdAt:ms(r.created_at)};}
+
+function route(){
+  var v=(location.hash||'#dukung').slice(1);
+  if(['dukung','cerita','antrian','admin','masuk'].indexOf(v)<0||(v==='admin'&&!S.admin))v='dukung';
+  $$('section[data-v]').forEach(function(s){s.hidden=s.dataset.v!==v;});
+  $$('.tabs a').forEach(function(a){if(a.dataset.v===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+}
+window.addEventListener('hashchange',route);
+
+/* ---------- status akses & kredit ---------- */
+function accessState(){
+  if(!S.sb||!S.uid)return 'dm';
+  if(S.admin)return 'admin';
+  return creditsLeft()>0?'open':'locked';
+}
+function creditsTotal(){return S.myClaims.filter(function(c){return c.status==='approved';}).length;}
+function creditsUsed(){return S.myStories.filter(function(s){return s.status!=='batal';}).length;}
+function creditsLeft(){return creditsTotal()-creditsUsed();}
+function latestClaim(){return S.myClaims.length?S.myClaims[S.myClaims.length-1]:null;}
+function hasPending(){return S.myClaims.some(function(c){return c.status==='pending';});}
+function igVerified(){return !!(S.myProfile&&S.myProfile.status==='verified');}
+var IG_RE=/^[a-z0-9_]([a-z0-9._]{0,28}[a-z0-9_])?$/;
+function igOk(u){return IG_RE.test(u)&&u.indexOf('..')<0;}
+function dmHandle(){var x=String(S.settings.dm||'').replace(/^@/,'').trim();return /^[A-Za-z0-9._]{1,30}$/.test(x)?x:'';}
+function claimDecision(c){
+  if(!c)return null;
+  return c.status==='approved'?'ok':c.status==='rejected'?'tolak':'pending';
+}
+function handleWriteError(err,node){
+  var m=String(err&&err.message||'');
+  if(err&&err.code==='photo'){
+    say(node,'Foto tidak bisa dibaca. Pakai JPG, PNG, atau WebP di bawah 15 MB.','err');
+  }else if(err&&(err.code==='42501'||/row-level security|not authorized|forbidden/i.test(m))){
+    say(node,'Tidak diizinkan. Kredit ceritamu mungkin sudah habis atau sesimu berakhir. Muat ulang halaman lalu coba lagi.','err');
+  }else if(err&&(err.statusCode==='413'||/too large|exceeded/i.test(m))){
+    say(node,'Berkasnya terlalu besar. Coba foto yang lebih kecil.','err');
+  }else{
+    say(node,'Belum tersimpan. Coba lagi sebentar lagi.','err');
+  }
+}
+
+/* ---------- render ---------- */
+function renderStatus(){
+  var n=$('#status'),t='';
+  if(!S.ready)t='Menghubungkan ke database...';
+  else if(!S.sb)t='Database tidak bisa dijangkau. Antrian tidak bisa dilihat dan konfirmasi dikirim lewat DM.';
+  else if(S.authError)t='Fitur masuk otomatis belum aktif, jadi konfirmasi dikirim lewat DM. Antrian tetap bisa dilihat.';
+  else if(S.loadError)t=S.loadError;
+  n.textContent=t;n.hidden=!t;
+}
+
+function renderDukung(){
+  var box=$('#links');box.replaceChildren();
+  var links=(S.settings.links||[]).map(function(l){return {label:String(l&&l.label||'Donasi'),url:safeUrl(l&&l.url)};}).filter(function(l){return l.url;});
+  links.forEach(function(l){box.append(el('a',{class:'btn primary',href:l.url,target:'_blank',rel:'noopener noreferrer',text:'Donasi lewat '+l.label}));});
+  $('#links-note').textContent=links.length
+    ?'Donasi mulai '+rp(S.settings.minAmount)+'. Simpan bukti pembayaran atau nomor referensinya.'
+    :(S.admin?'Tautan donasi belum diisi. Isi di tab Admin, bagian Pengaturan donasi.':'Tautan donasi belum tersedia. Tanyakan lewat DM.');
+
+  var canClaim=!!S.sb&&!!S.uid&&!S.admin;
+  var form=$('#claim-form');form.hidden=!canClaim||!igVerified()||hasPending();
+  if(S.myProfile&&form.elements.cname.value!=='@'+S.myProfile.username)form.elements.cname.value='@'+S.myProfile.username;
+  renderIg(canClaim);
+  var dm=$('#dm-note');dm.hidden=canClaim;
+  dm.textContent=S.admin
+    ?'Kamu masuk sebagai admin. Konfirmasi donasi dari pengikut masuk di tab Admin.'
+    :'Setelah donasi, isi formulir cerita di langkah 2 lalu kirim ringkasannya bersama bukti pembayaran lewat DM'+(S.settings.dm?' ke '+S.settings.dm:'')+'. Admin akan memasukkan ceritamu ke antrian.';
+
+  var sel=form.elements.cplatform,cur=sel.value;
+  sel.replaceChildren.apply(sel,links.map(function(l){return l.label;}).concat(['Lainnya']).map(function(t){return el('option',{value:t,text:t});}));
+  if([].some.call(sel.options,function(o){return o.value===cur;}))sel.value=cur;
+
+  var cs=$('#claim-state');cs.replaceChildren();
+  var c=latestClaim();
+  cs.hidden=!(canClaim&&igVerified()&&c);
+  if(!cs.hidden){
+    var d=claimDecision(c);
+    var kind=d==='ok'?'ok':d==='tolak'?'bad':'warn';
+    var label=d==='ok'?'Terverifikasi':d==='tolak'?'Ditolak':'Menunggu verifikasi';
+    cs.append(el('div',{class:'cardhead'},pill(label,kind),el('span',{class:'muted',text:rp(c.amount)+' lewat '+c.platform+' · '+when(c.createdAt)})));
+    if(d==='pending'){
+      cs.append(el('p',{text:'Admin akan mengecek donasimu. Halaman ini diperbarui otomatis saat sudah diverifikasi.'}));
+    }else if(d==='tolak'){
+      cs.append(el('p',{text:'Donasinya belum bisa dicocokkan. Periksa nominal dan nomor referensi, lalu kirim konfirmasi lagi.'}));
+    }
+    if(creditsTotal()>0){
+      cs.append(el('p',{text:'Kredit cerita: '+creditsTotal()+' · terpakai '+creditsUsed()+' · sisa '+Math.max(0,creditsLeft())+'.'}));
+      if(creditsLeft()>0)cs.append(el('a',{class:'btn primary',href:'#cerita',style:'align-self:flex-start',text:'Tulis ceritamu'}));
+    }
+  }
+}
+
+function renderIg(canUse){
+  var card=$('#ig-card'),st=$('#ig-state'),form=$('#ig-form');
+  card.hidden=!canUse;
+  st.replaceChildren();
+  if(!canUse)return;
+  var p=S.myProfile;
+  form.hidden=!!p;
+  if(!p)return;
+  var u='@'+p.username;
+  if(p.status==='verified'){
+    st.append(el('div',{class:'cardhead'},pill('Terverifikasi','ok'),el('strong',{text:u})),
+      el('div',{class:'row'},el('button',{class:'btn small',type:'button',text:'Keluar',onclick:logout})));
+  }else if(p.status==='pending'){
+    var h=dmHandle();
+    var codeBox=el('div',{class:'num',style:'font-size:1.6rem;letter-spacing:.06em;text-align:left',text:p.code});
+    var row=el('div',{class:'row'});
+    var cp=el('button',{class:'btn small',type:'button',text:'Salin kode'});
+    cp.addEventListener('click',function(){copyText(p.code,cp,null);});
+    row.append(cp);
+    if(h)row.append(el('a',{class:'btn small primary',href:'https://ig.me/m/'+h,target:'_blank',rel:'noopener noreferrer',text:'Buka DM Instagram'}));
+    row.append(el('button',{class:'btn small',type:'button',text:'Ganti username',onclick:dropProfile}));
+    st.append(el('div',{class:'cardhead'},pill('Menunggu verifikasi','warn'),el('strong',{text:u})),
+      el('p',{text:'Kirim DM dari akun '+u+' ke '+(S.settings.dm||'admin')+' berisi kode ini:'}),
+      codeBox,row,
+      el('p',{class:'muted',text:'Halaman ini diperbarui otomatis setelah admin memverifikasi.'}));
+  }else{
+    st.append(el('div',{class:'cardhead'},pill('Ditolak','bad'),el('strong',{text:u})),
+      el('p',{text:'Akun ini belum bisa diverifikasi. Pastikan username benar dan DM dikirim dari akun itu, lalu coba lagi.'}),
+      el('div',{class:'row'},el('button',{class:'btn small primary',type:'button',text:'Coba lagi',onclick:dropProfile})));
+  }
+}
+function dropProfile(){
+  if(!S.sb||!S.uid)return;
+  S.sb.from('profiles').delete().eq('user_id',S.uid).then(function(){refresh();});
+}
+
+function ranks(){
+  var m={},i=0;
+  S.queue.forEach(function(q){if(q.status!=='batal'){i++;m[q.id]=i;}});
+  return m;
+}
+function aheadOf(id){
+  var n=0;
+  for(var i=0;i<S.queue.length;i++){
+    var q=S.queue[i];
+    if(q.id===id)return n;
+    if(q.status==='antri'||q.status==='dikerjakan')n++;
+  }
+  return n;
+}
+
+function renderCerita(){
+  var mode=accessState();
+  var lock=$('#story-lock'),form=$('#story-form'),done=$('#story-done');
+  lock.hidden=mode!=='locked';
+  form.hidden=mode==='locked';
+  if(mode==='locked'){
+    var c=latestClaim();
+    var txt;
+    if(!igVerified())txt='Masuk dengan Instagram dan verifikasi akunmu dulu di langkah donasi.';
+    else if(!c)txt='Formulir terbuka setelah donasimu terverifikasi. Mulai dari langkah donasi.';
+    else if(creditsTotal()===0)txt=claimDecision(c)==='pending'
+      ?'Konfirmasi donasimu sedang dicek. Formulir terbuka otomatis setelah terverifikasi.'
+      :'Konfirmasi donasimu ditolak. Kirim ulang dari langkah donasi.';
+    else txt=hasPending()
+      ?'Kredit ceritamu sudah terpakai. Donasi terbarumu sedang dicek, formulir terbuka lagi setelah terverifikasi.'
+      :'Semua kredit ceritamu sudah terpakai. Donasi lagi untuk menulis cerita baru.';
+    $('#story-lock-text').textContent=txt;
+  }
+  var b=$('#story-banner');
+  b.className='msg';
+  b.textContent=mode==='open'?'Sisa kredit cerita: '+creditsLeft()+'.'
+    :mode==='admin'?'Mode admin: entri disimpan ke antrian sebagai input manual dari DM.'
+    :'Formulir ini membuat ringkasan yang kamu kirim lewat DM bersama bukti donasi.';
+  $('#story-submit').textContent=mode==='dm'?'Buat ringkasan DM':'Masukkan ke antrian';
+  var canPhoto=mode!=='dm';
+  $('#photo-field').hidden=!canPhoto;
+  var pdm=$('#photo-dm');
+  pdm.hidden=canPhoto;
+  pdm.textContent='Foto untuk karakter dikirim lewat DM bersama bukti donasi.';
+
+  done.replaceChildren();
+  done.hidden=true;
+  if(S.lastDone&&mode!=='dm'){
+    var q=S.queue.filter(function(x){return x.id===S.lastDone;})[0];
+    var rk=ranks();
+    done.hidden=false;
+    done.append(el('div',{class:'cardhead'},pill('Masuk antrian','ok')));
+    done.append(el('p',{text:q&&rk[q.id]?'Ceritamu tercatat sebagai nomor '+rk[q.id]+'. Di depanmu ada '+aheadOf(q.id)+' cerita.':'Ceritamu tersimpan. Nomor antrian muncul sebentar lagi.'}));
+    done.append(el('a',{class:'btn',href:'#antrian',style:'align-self:flex-start',text:'Lihat antrian'}));
+  }
+}
+
+function renderAntrian(){
+  var list=$('#q-list');list.replaceChildren();
+  var sum=$('#q-sum');sum.replaceChildren();
+  var mine=$('#q-mine');
+  if(!S.sb){
+    say(mine,'','');
+    list.append(el('li',{class:'empty',text:'Antrian hanya tampil saat database aktif. Tanyakan posisi ceritamu lewat DM.'}));
+    return;
+  }
+  var rk=ranks();
+  var live=S.queue.filter(function(q){return q.status!=='batal';});
+  var c={antri:0,dikerjakan:0,selesai:0};
+  live.forEach(function(q){if(c[q.status]!=null)c[q.status]++;});
+  sum.append(pill(c.antri+' antri','warn'),pill(c.dikerjakan+' dikerjakan','work'),pill(c.selesai+' selesai','ok'));
+  var myFirst=live.filter(function(q){return S.myIds[q.id]&&(q.status==='antri'||q.status==='dikerjakan');})[0];
+  if(myFirst)say(mine,'Ceritamu nomor '+rk[myFirst.id]+'. Di depanmu ada '+aheadOf(myFirst.id)+' cerita.','ok');
+  else say(mine,'','');
+  if(!live.length){
+    list.append(el('li',{class:'empty',text:'Antrian masih kosong. Jadilah yang pertama setelah donasimu terverifikasi.'}));
+    return;
+  }
+  live.forEach(function(q){
+    var isMine=!!S.myIds[q.id];
+    list.append(el('li',{class:'item'+(isMine?' mine':'')+(q.status==='selesai'?' done':'')},
+      el('div',{class:'num',text:String(rk[q.id])}),
+      el('div',{},el('div',{class:'who',text:(q.name||'Tanpa nama')+(isMine?' (punyamu)':'')}),el('div',{class:'meta',text:[q.setting,q.mood].filter(Boolean).join(' · ')})),
+      pill(STATUS[q.status]||q.status,STATUS_KIND[q.status]||'')
+    ));
+  });
+}
+
+function briefText(b,item){
+  return [
+    'Permintaan cerita untuk '+(b.name||item.name),
+    b.kelas&&'Kelas: '+b.kelas,
+    b.traits&&'Sifat: '+b.traits,
+    'Lokasi: '+b.setting,
+    'Nuansa: '+b.mood,
+    'Cerita yang diinginkan: '+b.plot,
+    b.dialog&&'Dialog yang diinginkan: '+b.dialog,
+    b.photoPath&&'Foto acuan: ada (lihat di tab Admin)'
+  ].filter(Boolean).join('\n');
+}
+function copyText(text,btn,fallbackNode){
+  var old=btn.textContent;
+  function flash(t){btn.textContent=t;setTimeout(function(){btn.textContent=old;},1800);}
+  var p;
+  try{p=navigator.clipboard.writeText(text);}catch(e){p=Promise.reject(e);}
+  p.then(function(){flash('Tersalin');},function(){
+    if(fallbackNode){fallbackNode.focus();fallbackNode.select();}
+    flash('Salin manual dari kotak');
+  });
+}
+
+function preparePhoto(file){
+  return new Promise(function(resolve,reject){
+    var bad={code:'photo'};
+    if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>15*1024*1024){reject(bad);return;}
+    var url=URL.createObjectURL(file),img=new Image();
+    img.onload=function(){
+      var r=Math.min(1,1024/Math.max(img.width,img.height));
+      var cv=document.createElement('canvas');
+      cv.width=Math.max(1,Math.round(img.width*r));cv.height=Math.max(1,Math.round(img.height*r));
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      URL.revokeObjectURL(url);
+      cv.toBlob(function(b){if(b)resolve(b);else reject(bad);},'image/jpeg',0.86);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);reject(bad);};
+    img.src=url;
+  });
+}
+
+function renderAdmin(){
+  if(!S.admin)return;
+  var pending=S.claims.filter(function(c){return c.status==='pending';});
+  var live=S.stories.filter(function(q){return q.status!=='batal';});
+  var sum=$('#adm-sum');sum.replaceChildren(
+    pill(S.profiles.filter(function(x){return x.status==='pending';}).length+' Instagram menunggu',S.profiles.some(function(x){return x.status==='pending';})?'warn':''),
+    pill(pending.length+' donasi menunggu',pending.length?'warn':''),
+    pill(live.filter(function(q){return q.status==='antri';}).length+' antri','warn'),
+    pill(live.filter(function(q){return q.status==='dikerjakan';}).length+' dikerjakan','work'),
+    pill(live.filter(function(q){return q.status==='selesai';}).length+' selesai','ok')
+  );
+
+  var igl=$('#adm-ig');igl.replaceChildren();
+  var pend=S.profiles.filter(function(x){return x.status==='pending';});
+  var done=S.profiles.filter(function(x){return x.status!=='pending';}).slice(0,10);
+  if(!S.profiles.length)igl.append(el('div',{class:'empty',text:'Belum ada permintaan verifikasi.'}));
+  pend.concat(done).forEach(function(x){
+    var isP=x.status==='pending';
+    var okName=igOk(x.username);
+    var row=el('div',{class:'admrow'},
+      el('div',{class:'top'},el('strong',{text:'@'+x.username}),isP?pill('Menunggu','warn'):pill(x.status==='verified'?'Terverifikasi':'Ditolak',x.status==='verified'?'ok':'bad')),
+      el('dl',{class:'kv'},el('dt',{text:'Kode'}),el('dd',{text:x.code}),el('dt',{text:'Waktu'}),el('dd',{text:when(x.createdAt)}))
+    );
+    if(okName)row.append(el('div',{class:'row'},el('a',{class:'btn small',href:'https://instagram.com/'+x.username,target:'_blank',rel:'noopener noreferrer',text:'Buka profil Instagram'})));
+    if(isP){
+      var m=el('p',{class:'msg',hidden:true});
+      row.append(el('div',{class:'row'},
+        el('button',{class:'btn primary small',type:'button',text:'Verifikasi',onclick:function(){reviewIg(x,true,m);}}),
+        el('button',{class:'btn small',type:'button',text:'Tolak',onclick:function(){reviewIg(x,false,m);}})),m);
+    }
+    igl.append(row);
+  });
+
+  var cl=$('#adm-claims');cl.replaceChildren();
+  var claims=S.claims.slice().sort(function(a,b){
+    var pa=a.status==='pending'?0:1,pb=b.status==='pending'?0:1;
+    return pa-pb||b.createdAt-a.createdAt;
+  });
+  if(!claims.length)cl.append(el('div',{class:'empty',text:'Belum ada konfirmasi donasi.'}));
+  claims.forEach(function(c){
+    var decided=c.status!=='pending';
+    var row=el('div',{class:'admrow'},
+      el('div',{class:'top'},el('strong',{text:c.name||'Tanpa nama'}),decided?pill(c.status==='approved'?'Disetujui':'Ditolak',c.status==='approved'?'ok':'bad'):pill('Menunggu','warn')),
+      el('dl',{class:'kv'},
+        el('dt',{text:'Nominal'}),el('dd',{text:rp(c.amount)}),
+        el('dt',{text:'Lewat'}),el('dd',{text:c.platform||'-'}),
+        el('dt',{text:'Referensi'}),el('dd',{text:c.ref||'-'}),
+        el('dt',{text:'Waktu'}),el('dd',{text:when(c.createdAt)})
+      )
+    );
+    if(!decided){
+      var msg=el('p',{class:'msg',hidden:true});
+      var ok=el('button',{class:'btn primary small',type:'button',text:'Setujui (+1 cerita)',onclick:function(){decide(c,true,msg);}});
+      var no=el('button',{class:'btn small',type:'button',text:'Tolak',onclick:function(){decide(c,false,msg);}});
+      row.append(el('div',{class:'row'},ok,no),msg);
+    }
+    cl.append(row);
+  });
+
+  var ql=$('#adm-queue');ql.replaceChildren();
+  var rk=ranks();
+  if(!S.stories.length)ql.append(el('div',{class:'empty',text:'Antrian kosong.'}));
+  S.stories.forEach(function(q){
+    var sel=el('select',{'aria-label':'Status untuk '+(q.name||'cerita')});
+    Object.keys(STATUS).forEach(function(k){sel.append(el('option',{value:k,text:STATUS[k],selected:q.status===k}));});
+    sel.addEventListener('change',function(){
+      S.sb.from('stories').update({status:sel.value}).eq('id',q.id).then(function(r){
+        if(r.error)sel.value=q.status;
+        refresh();
+      });
+    });
+    var detail=el('div',{class:'kv-wrap'});
+    var btn=el('button',{class:'btn small',type:'button',text:S.openBrief[q.id]?'Sembunyikan brief':'Lihat brief'});
+    btn.addEventListener('click',function(){
+      S.openBrief[q.id]=!S.openBrief[q.id];
+      renderAdmin();
+    });
+    var row=el('div',{class:'admrow'},
+      el('div',{class:'top'},
+        el('strong',{text:(rk[q.id]?'#'+rk[q.id]+' ':'')+(q.name||'Tanpa nama')}),
+        el('span',{class:'row'},pill(q.source==='dm'?'Dari DM':'Dari web',''),sel)
+      ),
+      el('p',{class:'muted',text:[q.setting,q.mood,when(q.createdAt)].filter(Boolean).join(' · ')}),
+      el('div',{class:'row'},btn),
+      detail
+    );
+    if(S.openBrief[q.id])showBrief(q,detail);
+    ql.append(row);
+  });
+}
+function showBrief(q,box){
+  box.replaceChildren();
+  var text=briefText(q,q);
+  var ta=el('textarea',{class:'out',readonly:true});
+  ta.value=text;
+  var cb=el('button',{class:'btn small',type:'button',text:'Salin brief'});
+  cb.addEventListener('click',function(){copyText(text,cb,ta);});
+  var ph=null;
+  if(q.photoPath){
+    var u=S.photoUrls[q.photoPath];
+    if(u===undefined){
+      S.photoUrls[q.photoPath]=null;
+      S.sb.storage.from(BUCKET).createSignedUrl(q.photoPath,3600).then(function(r){
+        S.photoUrls[q.photoPath]=(r.data&&r.data.signedUrl)||false;
+        renderAdmin();
+      },function(){S.photoUrls[q.photoPath]=false;renderAdmin();});
+      ph=el('p',{class:'muted',text:'Memuat foto...'});
+    }else if(u===null){
+      ph=el('p',{class:'muted',text:'Memuat foto...'});
+    }else if(u){
+      ph=el('a',{href:u,target:'_blank',rel:'noopener'},el('img',{class:'photo-prev',src:u,alt:'Foto acuan dari '+(q.name||'pengikut')}));
+    }else{
+      ph=el('p',{class:'muted',text:'Foto tidak bisa dimuat.'});
+    }
+  }
+  box.append(ph,ta,el('div',{class:'row',style:'margin-top:8px'},cb));
+}
+
+function renderLogin(){
+  var form=$('#login-form'),st=$('#login-state');
+  st.replaceChildren();
+  if(S.admin||S.email){
+    form.hidden=true;st.hidden=false;
+    st.append(el('p',{text:S.admin?'Kamu masuk sebagai admin ('+S.email+').':'Akun '+S.email+' tidak terdaftar sebagai admin.'}));
+    var row=el('div',{class:'row'});
+    if(S.admin)row.append(el('a',{class:'btn primary',href:'#admin',text:'Buka tab Admin'}));
+    row.append(el('button',{class:'btn',type:'button',text:'Keluar',onclick:logout}));
+    st.append(row);
+  }else{
+    form.hidden=!S.sb;st.hidden=true;
+  }
+}
+function logout(){
+  if(!S.sb)return;
+  S.sb.auth.signOut().then(function(){location.hash='#dukung';location.reload();});
+}
+
+function renderAll(){
+  $('#tab-admin').hidden=!S.admin;
+  renderStatus();renderDukung();renderCerita();renderAntrian();renderAdmin();renderLogin();fillSettings();
+}
+
+/* ---------- aksi ---------- */
+function reviewIg(x,approve,msg){
+  S.sb.rpc('review_instagram',{p_user:x.uid,p_approve:approve}).then(function(r){
+    if(r.error)say(msg,'Belum tersimpan. Coba lagi.','err');
+    else refresh();
+  });
+}
+$('#ig-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  var msg=$('#ig-msg'),btn=$('#ig-submit');
+  if(!S.sb||!S.uid)return;
+  var u=$('#igname').value.trim().replace(/^@/,'').toLowerCase();
+  if(!igOk(u)){say(msg,'Username tidak valid. Pakai huruf, angka, titik, atau garis bawah (maksimal 30 karakter).','err');return;}
+  btn.disabled=true;
+  S.sb.from('profiles').insert({username:u}).then(function(r){
+    if(r.error&&r.error.code!=='23505'){handleWriteError(r.error,msg);return;}
+    say(msg,'','');$('#igname').value='';
+    return refresh();
+  },function(err){handleWriteError(err,msg);}).then(function(){btn.disabled=false;});
+});
+
+function decide(c,approve,msg){
+  S.sb.from('claims').update({status:approve?'approved':'rejected',decided_at:new Date().toISOString()}).eq('id',c.id)
+    .then(function(r){
+      if(r.error)say(msg,'Belum tersimpan. Coba lagi.','err');
+      else refresh();
+    });
+}
+
+$('#claim-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  var f=e.target,msg=$('#claim-msg'),btn=$('#claim-submit');
+  if(!S.sb||!S.uid)return;
+  var amount=Number(f.elements.camount.value);
+  if(!(amount>=1000)){say(msg,'Isi nominal donasi yang benar.','err');return;}
+  btn.disabled=true;
+  if(!igVerified()){say(msg,'Verifikasi akun Instagram dulu.','err');return;}
+  S.sb.from('claims').insert({
+    name:'@'+S.myProfile.username,amount:Math.round(amount),
+    platform:f.elements.cplatform.value,ref:f.elements.cref.value.trim()
+  }).then(function(r){
+    if(r.error){handleWriteError(r.error,msg);return;}
+    f.reset();say(msg,'Konfirmasi terkirim. Tunggu admin mengecek donasimu.','ok');
+    return refresh();
+  },function(err){handleWriteError(err,msg);}).then(function(){btn.disabled=false;});
+});
+
+$('#story-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  var f=e.target,msg=$('#story-msg'),btn=$('#story-submit');
+  var d={
+    name:f.elements.sname.value.trim(),kelas:f.elements.kelas.value.trim(),traits:f.elements.traits.value.trim(),
+    setting:f.elements.setting.value,mood:f.elements.mood.value,plot:f.elements.plot.value.trim(),dialog:f.elements.dialog.value.trim()
+  };
+  var mode=accessState();
+  if(!d.name||!d.plot){say(msg,'Isi nama dan cerita yang kamu mau.','err');return;}
+  if(mode==='dm'){
+    var text='Halo, aku mau memesan cerita Kisah di Sekolah. Bukti donasi kukirim bersama pesan ini.\n\n'+briefText(d,{name:d.name})+'\nTampil di antrian: '+'sesuai nama panggilan';
+    $('#dm-out').value=text;$('#dm-box').hidden=false;
+    say(msg,'Ringkasan siap. Salin lalu kirim lewat DM'+(S.settings.dm?' ke '+S.settings.dm:'')+' bersama bukti donasi.','ok');
+    return;
+  }
+  if(mode==='locked'){say(msg,'Formulir masih terkunci.','err');return;}
+  var id=uuid();
+  var folder=mode==='admin'?'manual':S.uid;
+  var file=f.elements.photo.files[0];
+  if(file&&!f.elements.photoconsent.checked){say(msg,'Centang persetujuan foto dulu, atau kosongkan pilihan fotonya.','err');return;}
+  btn.disabled=true;
+  var photoPath=null;
+  var photoStep=file
+    ?preparePhoto(file).then(function(blob){
+        var path=folder+'/'+id+'.jpg';
+        return S.sb.storage.from(BUCKET).upload(path,blob,{contentType:'image/jpeg'}).then(function(r){
+          if(r.error)throw r.error;
+          photoPath=path;
+        });
+      })
+    :Promise.resolve();
+  photoStep.then(function(){
+    var row={
+      id:id,display_name:d.name,kelas:d.kelas||null,traits:d.traits||null,
+      setting:d.setting,mood:d.mood,plot:d.plot,dialog:d.dialog||null,
+      photo_path:photoPath,source:mode==='admin'?'dm':'web'
+    };
+    if(mode==='admin')row.user_id=null;
+    return S.sb.from('stories').insert(row).then(function(r){
+      if(r.error){
+        if(photoPath)S.sb.storage.from(BUCKET).remove([photoPath]).then(function(){},function(){});
+        throw r.error;
+      }
+    });
+  }).then(function(){
+    f.reset();$('#dm-box').hidden=true;say(msg,'','');
+    S.lastDone=id;
+    return refresh();
+  }).catch(function(err){handleWriteError(err,msg);}).then(function(){btn.disabled=false;});
+});
+$('#dm-copy').addEventListener('click',function(e){copyText($('#dm-out').value,e.currentTarget,$('#dm-out'));});
+$('#photo').addEventListener('change',function(e){
+  var f=e.target.files[0],pv=$('#photo-prev');
+  if(pv.dataset.u){URL.revokeObjectURL(pv.dataset.u);pv.dataset.u='';}
+  if(!f){pv.hidden=true;$('#photo-consent-row').hidden=true;return;}
+  var u=URL.createObjectURL(f);pv.dataset.u=u;pv.src=u;pv.hidden=false;$('#photo-consent-row').hidden=false;
+});
+$('#story-form').addEventListener('reset',function(){
+  setTimeout(function(){$('#photo-prev').hidden=true;$('#photo-consent-row').hidden=true;},0);
+});
+
+function fillSettings(){
+  if(S.settingsFilled||!S.admin||!S.settingsLoaded)return;
+  var f=$('#settings-form').elements,L=S.settings.links||[];
+  f.l1label.value=L[0]&&L[0].label||'';f.l1url.value=L[0]&&L[0].url||'';
+  f.l2label.value=L[1]&&L[1].label||'';f.l2url.value=L[1]&&L[1].url||'';
+  f.minamount.value=S.settings.minAmount||'';f.dm.value=S.settings.dm||'';
+  S.settingsFilled=true;
+}
+$('#settings-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  var f=e.target.elements,msg=$('#settings-msg');
+  var links=[[f.l1label.value.trim(),f.l1url.value.trim()],[f.l2label.value.trim(),f.l2url.value.trim()]]
+    .filter(function(p){return p[1];}).map(function(p){return {label:p[0]||'Donasi',url:p[1]};});
+  if(links.some(function(l){return !safeUrl(l.url);})){say(msg,'Tautan harus diawali https://','err');return;}
+  S.sb.from('settings').update({
+    links:links,min_amount:Math.max(0,Math.round(Number(f.minamount.value))||10000),
+    dm_handle:f.dm.value.trim(),updated_at:new Date().toISOString()
+  }).eq('id',1).then(function(r){
+    if(r.error){say(msg,'Belum tersimpan. Coba lagi.','err');return;}
+    say(msg,'Pengaturan tersimpan.','ok');refresh();
+  });
+});
+
+$('#login-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  var f=e.target.elements,msg=$('#login-msg'),btn=$('#login-submit');
+  if(!S.sb)return;
+  btn.disabled=true;
+  S.sb.auth.signInWithPassword({email:f.lemail.value.trim(),password:f.lpass.value}).then(function(r){
+    if(r.error){say(msg,'Email atau kata sandi salah.','err');btn.disabled=false;return;}
+    location.hash='#admin';location.reload();
+  },function(){say(msg,'Belum bisa masuk. Coba lagi.','err');btn.disabled=false;});
+});
+$('#logout').addEventListener('click',logout);
+
+/* ---------- data ---------- */
+var chain=Promise.resolve();
+function refresh(){chain=chain.then(load,load);return chain;}
+function load(){
+  var sb=S.sb;
+  var jobs=[
+    sb.from('settings').select('links,min_amount,dm_handle').eq('id',1).maybeSingle(),
+    sb.from('queue_public').select('*').order('created_at',{ascending:true}).limit(500)
+  ];
+  if(S.uid&&S.admin){
+    jobs.push(sb.from('claims').select('*').order('created_at',{ascending:false}).limit(500));
+    jobs.push(sb.from('stories').select('*').order('created_at',{ascending:true}).limit(500));
+    jobs.push(sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(500));
+  }else if(S.uid){
+    jobs.push(sb.from('claims').select('*').eq('user_id',S.uid).order('created_at',{ascending:true}));
+    jobs.push(sb.from('stories').select('id,status,created_at').eq('user_id',S.uid));
+    jobs.push(sb.from('profiles').select('*').eq('user_id',S.uid).maybeSingle());
+  }
+  return Promise.all(jobs).then(function(r){
+    var bad=r.filter(function(x){return x.error;})[0];
+    if(bad)throw bad.error;
+    var s=r[0].data||{};
+    S.settings={links:Array.isArray(s.links)?s.links:[],minAmount:typeof s.min_amount==='number'?s.min_amount:10000,dm:typeof s.dm_handle==='string'?s.dm_handle:''};
+    S.settingsLoaded=true;
+    S.queue=(r[1].data||[]).map(normQ);
+    if(S.uid&&S.admin){
+      S.claims=(r[2].data||[]).map(normClaim);
+      S.stories=(r[3].data||[]).map(normStory);
+      S.profiles=(r[4].data||[]).map(normProfile);
+    }else if(S.uid){
+      S.myClaims=(r[2].data||[]).map(normClaim);
+      S.myStories=(r[3].data||[]).map(function(x){return {id:x.id,status:x.status};});
+      S.myProfile=r[4].data?normProfile(r[4].data):null;
+      S.myIds={};S.myStories.forEach(function(x){S.myIds[x.id]=true;});
+    }
+    S.loaded=true;S.loadError='';
+  }).catch(function(){
+    S.loadError='Data tidak bisa dibaca saat ini. Coba muat ulang sebentar lagi.';
+  }).then(renderAll);
+}
+
+function subscribe(){
+  var t=null;
+  function sched(){clearTimeout(t);t=setTimeout(refresh,300);}
+  try{
+    var ch=S.sb.channel('kisah-live');
+    ['queue_public','claims','stories','profiles'].forEach(function(table){
+      ch.on('postgres_changes',{event:'*',schema:'public',table:table},sched);
+    });
+    ch.subscribe();
+  }catch(e){}
+  // cadangan bila koneksi realtime putus
+  setInterval(function(){if(!document.hidden)refresh();},45000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)refresh();});
+}
+
+async function init(){
+  route();renderAll();
+  var sb=null;
+  try{
+    if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  }catch(e){}
+  if(sb){
+    try{
+      var g=await sb.auth.getSession();
+      var sess=g.data&&g.data.session;
+      if(!sess){
+        // pengikut dapat identitas anonim otomatis, tanpa daftar akun
+        var r=await sb.auth.signInAnonymously();
+        if(r.error)throw r.error;
+        sess=r.data&&r.data.session;
+      }
+      if(sess){S.uid=sess.user.id;S.email=sess.user.email||null;}
+      else S.authError=true;
+    }catch(e){S.authError=true;}
+    if(S.uid&&S.email){
+      try{
+        var ad=await sb.from('admins').select('email').maybeSingle();
+        S.admin=!!(ad.data&&ad.data.email);
+      }catch(e){}
+    }
+  }
+  S.sb=sb;S.ready=true;
+  route();renderAll();
+  if(sb){refresh();subscribe();}
+}
+init();
+})();
+</script>
+
+</body></html>
