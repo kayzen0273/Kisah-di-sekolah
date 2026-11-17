@@ -418,7 +418,14 @@ const regUI=()=>{
  const p=el("div","paper"),d=c||a;
  p.appendChild(el("h4","",c?"Kamu sudah jadi warga":"Pendaftaran menunggu admin"));
  p.appendChild(el("p","",c?"Satu perangkat hanya bisa punya satu kartu. Untuk daftar lagi, kartu ini harus dihapus dulu dengan persetujuan admin.":"Admin sedang mengecek kartumu. Kirim kode atau bukti donasi lewat DM Instagram."));
- const card=idc(d,{label:c?(isGuru(c)?"GURU / STAF":"KARTU MURID"):"PENDAFTAR"});card.style.margin="12px 0";p.appendChild(card);
+ if(!c&&a&&a.code){
+  const kb=el("div","msg");kb.appendChild(el("div","","Kode pendaftaranmu. Salin, lalu kirim lewat DM Instagram bersama bukti donasi:"));
+  const cd=el("div","name",a.code);cd.style.cssText="font-size:30px;letter-spacing:.08em;margin:6px 0;user-select:all";kb.appendChild(cd);
+  const cp=el("button","b sm pri","Salin kode");cp.type="button";
+  cp.onclick=()=>{const done=()=>{cp.textContent="Tersalin ✓";setTimeout(()=>{cp.textContent="Salin kode"},2000)};
+   try{navigator.clipboard.writeText(a.code).then(done,()=>{cp.textContent="Tekan lama kode di atas"})}catch(e){cp.textContent="Tekan lama kode di atas"}};
+  kb.appendChild(cp);p.appendChild(kb)}
+ const card=idc(d,{label:c?(isGuru(c)?"GURU / STAF":"KARTU MURID"):"PENDAFTAR",right:!c&&a&&a.code?a.code:""});card.style.margin="12px 0";p.appendChild(card);
  if(myRem)p.appendChild(el("div","msg","Permintaan hapus sudah dikirim. Menunggu persetujuan admin."));
  else{const x=el("button","b del","Ajukan hapus kartu");
   x.onclick=()=>{if(x.dataset.s!=="1"){x.dataset.s="1";x.textContent="Yakin ajukan hapus?";setTimeout(()=>{x.dataset.s="";x.textContent="Ajukan hapus kartu"},3000);return}
@@ -437,7 +444,7 @@ $("kirim").onclick=async()=>{
    let photo="";
    if(photoFile){try{photo=await upImg(await resize(photoFile),"photos")}catch(e){show("Foto gagal diunggah: "+(e&&e.message||e));return}}
    await rpc("submit_application",{p_owner:devId(),p_ig:d.ig,p_nama:d.nama,p_tipe:d.tipe,p_kelas:d.kelas,p_sifat:d.sifat,p_hobi:d.hobi,p_photo:photo,p_avatar:""});
-   show("Terkirim. Admin akan mengecek. Kirim kode atau bukti donasi lewat DM Instagram.");
+   show("Terkirim. Kode pendaftaranmu muncul di halaman ini.");
    await loadMine()}
   catch(e){show("Gagal kirim: "+(e&&e.message||e))}
   finally{btn.disabled=false}
@@ -472,7 +479,7 @@ const renderChars=snap=>{
 const renderApps=rows=>{const L=$("apps");L.textContent="";$("a_ant").textContent=$("k_ant").textContent=rows.length;
  if(!rows.length){L.appendChild(el("p","empty","Tidak ada antrean."));return}
  const g=el("div","grid");
- rows.forEach(d=>{const c=idc(d,{label:"PENDAFTAR"}),f=el("div","idf");
+ rows.forEach(d=>{const c=idc(d,{label:"PENDAFTAR",right:d.code||""}),f=el("div","idf");
   const ok=el("button","b sm pri","Setujui");
   ok.onclick=()=>{ok.disabled=true;adm("admin_approve",{p_owner:d.owner},ok)};
   const no=el("button","b sm del","Tolak");no.onclick=()=>{no.disabled=true;adm("admin_reject",{p_owner:d.owner},no)};
